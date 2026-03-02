@@ -1,0 +1,3 @@
+[submodule "Fluxer.Net"]
+	path = Fluxer.Net
+	url = git@github.com:Nexfinity/Fluxer.Net.git
