@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY ["Botty/Botty.csproj", "Botty/"]
 COPY ["Database/Database.csproj", "Database/"]
-COPY ["Fluxer.Net/Fluxer.Net/Fluxer.Net.csproj", "Fluxer.Net/"]
+# COPY ["Fluxer.Net/Fluxer.Net/Fluxer.Net.csproj", "Fluxer.Net/"]
 RUN dotnet restore Botty/Botty.csproj
 COPY Botty/ Botty/
 COPY Database/ Database/

@@ -31,15 +31,10 @@ public class BottyService : BackgroundService
         var token = config["TOKEN"];
 
         // Create the clients
-        var apiClient = new ApiClient(token, new() 
+        var client = new FluxerClient(token, new FluxerConfig
         {
-            Serilog = Log.Logger as Logger,
-            EnableRateLimiting = true,
-        });
-
-        var gatewayClient = new GatewayClient(token, new() 
-        {
-            Serilog = Log.Logger as Logger,
+            RestSerilog = Log.Logger as Logger,
+            GatewaySerilog = Log.Logger as Logger,
             EnableRateLimiting = true,
             ReconnectAttemptDelay = 2,
             IgnoredGatewayEvents = new()
@@ -48,6 +43,23 @@ public class BottyService : BackgroundService
             },
             Presence = new PresenceUpdateGatewayData(Status.Online)
         });
+        // var apiClient = new ApiClient(token, new() 
+        // {
+        //     Serilog = Log.Logger as Logger,
+        //     EnableRateLimiting = true,
+        // });
+
+        // var gatewayClient = new GatewayClient(token, new() 
+        // {
+        //     Serilog = Log.Logger as Logger,
+        //     EnableRateLimiting = true,
+        //     ReconnectAttemptDelay = 2,
+        //     IgnoredGatewayEvents = new()
+        //     {
+        //         "PRESENCE_UPDATE"   // Ignore users online/offlince changes
+        //     },
+        //     Presence = new PresenceUpdateGatewayData(Status.Online)
+        // });
 
         var commands = new CommandService(
             Log.Logger as Logger,
@@ -63,13 +75,13 @@ public class BottyService : BackgroundService
 
         Log.Information("Registered {ModuleCount} command module(s) with {CommandCount} command(s)",
             commands.Modules.Count, commands.Commands.Count());
-        gatewayClient.Ready += (data) =>
+        client.Gateway.Ready += (data) =>
         {
             Log.Information("Bot is ready! Logged in as {Username}", data.User.Username);
             Log.Information("Connected to {GuildCount} guilds!", data.Guilds.Count());
         };
 
-        gatewayClient.MessageCreate += async (data) =>
+        client.Gateway.MessageCreate += async (data) =>
         {
             if (data.Author == null || data.Author.IsBot) return;
 
@@ -78,7 +90,7 @@ public class BottyService : BackgroundService
             {
                 argPos = 1;
 
-                var context = new CommandContext(apiClient, gatewayClient, data);
+                var context = new CommandContext(client, data);
 
                 var result = await commands.ExecuteAsync(context, argPos);
 
@@ -90,7 +102,7 @@ public class BottyService : BackgroundService
         };
 
         // Connect to the gateway
-        await gatewayClient.ConnectAsync();
+        await client.Gateway.ConnectAsync();
 
         Log.Information("Bot is running! Press Ctrl+C to exit.");
 
