@@ -1,4 +1,5 @@
-﻿using Database;
+﻿using Botty;
+using Database;
 using Fluxer.Net;
 using Fluxer.Net.Commands;
 using Fluxer.Net.Data.Enums;
@@ -31,5 +32,7 @@ using (var scope = host.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 }
+
+ServiceLocator.Initialize(host.Services);
 
 await host.RunAsync();

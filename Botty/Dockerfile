@@ -6,7 +6,7 @@ COPY ["Database/Database.csproj", "Database/"]
 RUN dotnet restore Botty/Botty.csproj
 COPY Botty/ Botty/
 COPY Database/ Database/
-COPY Fluxer.Net/Fluxer.Net/ Fluxer.Net
+# COPY Fluxer.Net/Fluxer.Net/ Fluxer.Net
 
 
 WORKDIR "/src/Botty"

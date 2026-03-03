@@ -1,3 +1,4 @@
+using Botty;
 using Database;
 using Fluxer.Net;
 using Fluxer.Net.Commands;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Core;
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 
 public class BottyService : BackgroundService
 {
@@ -85,6 +87,7 @@ public class BottyService : BackgroundService
         {
             if (data.Author == null || data.Author.IsBot) return;
 
+
             int argPos = 0;
             if (data.Content?.StartsWith('!') == true)
             {
@@ -99,6 +102,40 @@ public class BottyService : BackgroundService
                     Log.Warning("Command failed: {Error}", result);
                 }
             }
+            else
+            // Leaderboard handling
+            if (data.Content?.Count() > 5)
+            {
+                using var scope = ServiceLocator.Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                // Check if this even is a guild
+                var guild_id = data.GuildId;
+                if (guild_id != null)
+                {
+                    // Fetch the corresponding database object and create it if it doesn't exist
+                    var guild = await db.Guilds.FindAsync((long)guild_id)
+                        ?? db.Guilds.Add(new Database.Guild {Id = (long)guild_id }).Entity;
+
+                    // Fetch the corresponding settings and create it if it doesn't exist
+                    var guild_settings = await db.XpGuildSettings.FirstOrDefaultAsync(settings => settings.Guild == guild)
+                    ?? db.XpGuildSettings.Add(new Database.XpGuildSettings{ Guild = guild, active = false }).Entity;
+
+                    if (guild_settings.active)
+                    {
+                        var guild_user = await db.GuildUsers.FirstOrDefaultAsync(user => user.Guild == guild)
+                        ?? db.GuildUsers.Add(new Database.GuildUser{ Guild = guild }).Entity;
+
+                        var user_xp = await db.XpGuildUsers.FirstOrDefaultAsync(user => user.User == guild_user)
+                        ?? db.XpGuildUsers.Add(new Database.XpGuildUserRank{ User = guild_user, Exp = 0 }).Entity;
+
+                        user_xp.Exp += Random.Shared.Next(15, 25);
+                        await db.SaveChangesAsync();
+                    }
+                }
+                
+            }
+ 
         };
 
         // Connect to the gateway
