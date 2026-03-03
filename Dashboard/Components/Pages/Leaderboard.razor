@@ -1,0 +1,63 @@
+@page "/leaderboard/{guild_id}"
+
+<h1>Leaderboard</h1>
+@if (users == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+<table class="table w-100 align-middle text-center">
+    <thead>
+        <tr>
+            <td>Name</td>
+            <td>Level</td>
+            <td>Exp</td>
+            <td></td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in users)
+        {
+        <tr>
+            <td>@user.Name</td>
+            <td>@user.CurrentLevel</td>
+            <td>@user.Exp</td>
+            <td>
+                <div style="width: 10rem; background: #eee; border-radius: 4px; vertical-align: middle">
+                    <div style="width: @( (user.Exp % 200) / 2.0 )%; 
+                                background: #4caf50; 
+                                height: 10px; 
+                                border-radius: 4px;">
+                    </div>
+                </div>
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>
+}
+@code {
+private User[]? users;
+    [Parameter] public string? guild_id { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate asynchronous loading to demonstrate streaming rendering
+        await Task.Delay(500);
+
+        var summaries = new[] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J" };
+        users = Enumerable.Range(1, 10).Select(index => new User
+        {
+            Name = summaries[Random.Shared.Next(summaries.Length)],
+            Exp = Random.Shared.Next(0, 5000),
+        }).OrderByDescending(u => u.Exp)
+        .ToArray();
+    }
+
+    private class User
+    {
+        public string Name { get; set; }
+        public int Exp {get; set; }
+        public int CurrentLevel => (int)(Exp/200.0);
+    }
+}
