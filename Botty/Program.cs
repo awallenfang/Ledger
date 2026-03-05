@@ -1,4 +1,5 @@
 ﻿using Botty;
+using Botty.Services;
 using Database;
 using Fluxer.Net;
 using Fluxer.Net.Commands;
@@ -19,6 +20,9 @@ Log.Logger = new LoggerConfiguration()
             .CreateLogger();
             
 var host = Host.CreateDefaultBuilder(args)
+    .UseSerilog((context, services, configuration) => configuration
+            .ReadFrom.Services(services)
+            .WriteTo.Console(theme: AnsiConsoleTheme.Code))
     .ConfigureServices((context, services) =>
     {
         services.AddDbContext<AppDbContext>(options =>

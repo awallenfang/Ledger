@@ -1,9 +1,14 @@
 @page "/leaderboard/{guild_id}"
-
+@using Botty.Services
+@using Database
+@using Database.Services
+@using Microsoft.AspNetCore.Mvc.ModelBinding
+@inject LeaderboardDbService db
+@inject BottyAPIService api
 <h1>Leaderboard</h1>
 @if (users == null)
 {
-    <p><em>Loading...</em></p>
+    <p><em>There seems to be no users with experience on this server...</em></p>
 }
 else
 {
@@ -38,20 +43,25 @@ else
 </table>
 }
 @code {
-private User[]? users;
+    private User[]? users;
     [Parameter] public string? guild_id { get; set; }
     protected override async Task OnInitializedAsync()
     {
         // Simulate asynchronous loading to demonstrate streaming rendering
         await Task.Delay(500);
 
-        var summaries = new[] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J" };
-        users = Enumerable.Range(1, 10).Select(index => new User
-        {
-            Name = summaries[Random.Shared.Next(summaries.Length)],
-            Exp = Random.Shared.Next(0, 5000),
-        }).OrderByDescending(u => u.Exp)
-        .ToArray();
+        var db_users = await db.GetGuildLeaderboard((long)Convert.ToInt64(guild_id)) ?? new List<XpGuildUserRank>();
+        var actual_users = new List<User>();
+        foreach (var user in db_users) {
+            actual_users.Add(
+                new User {
+                    Name = await api.GetUserName(user.User.Id),
+                    Exp = user.Exp
+                }
+            );
+        }
+        users = actual_users.ToArray();
+       
     }
 
     private class User

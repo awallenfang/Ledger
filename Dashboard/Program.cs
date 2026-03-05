@@ -1,10 +1,18 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Dashboard.Components;
 using Database;
+using Database.Services;
+using Fluxer.Net;
+using Fluxer.Net.Data.Enums;
+using Fluxer.Net.Gateway.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Serilog;
+using Serilog.Core;
+using Botty.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +22,28 @@ builder.Services.AddRazorComponents()
     
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddScoped<LeaderboardDbService>();
+
+var token = builder.Configuration["TOKEN"];
+
+// Create the clients
+var client = new FluxerClient(token, new FluxerConfig
+{
+    RestSerilog = Log.Logger as Logger,
+    GatewaySerilog = null,
+    EnableRateLimiting = true,
+    ReconnectAttemptDelay = 2,
+    IgnoredGatewayEvents = new()
+    {
+        "PRESENCE_UPDATE"   // Ignore users online/offlince changes
+    },
+    Presence = new PresenceUpdateGatewayData(Status.Online),
+
+});
+
+builder.Services.AddSingleton(client);
+builder.Services.AddScoped<BottyAPIService>();
 
 var app = builder.Build();
 

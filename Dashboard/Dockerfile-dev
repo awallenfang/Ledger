@@ -10,10 +10,10 @@ COPY Botty/ Botty/
 
 
 WORKDIR "/src/Dashboard"
-RUN dotnet publish -c Release -o /app/out
+# RUN dotnet publish -c Release -o /app/out
+ENTRYPOINT ["dotnet", "run", "--project", "."]
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0
-WORKDIR /app
-COPY --from=build /app/out .
-ENTRYPOINT ["dotnet", "Dashboard.dll"]
+# FROM mcr.microsoft.com/dotnet/aspnet:10.0
+# WORKDIR /app
+# COPY --from=build /app/out .
 

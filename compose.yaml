@@ -2,7 +2,7 @@ services:
   bot:
     build: 
       context: .
-      dockerfile: Botty/Dockerfile
+      dockerfile: Botty/Dockerfile-dev
     
     restart: always
     depends_on:
@@ -10,22 +10,29 @@ services:
         condition: service_healthy
     env_file:
       - .env
-
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /
+          initial_sync: true
   dashboard:
     build: 
       context: .
-      dockerfile: Dashboard/Dockerfile
+      dockerfile: Dashboard/Dockerfile-dev
     restart: always
     ports:
-        - "8080:8080"
+        - "5248:5248"
     depends_on:
       db:
         condition: service_healthy
     env_file:
       - .env
+    environment:
+      - ASPNETCORE_URLS=http://+:5248
     develop:
       watch:
-        - action: rebuild
+        - action: sync
           path: .
           target: /
           initial_sync: true
@@ -41,7 +48,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d botty_db"]
+      test: ["CMD-SHELL", "pg_isready -U botty -d botty"]
       interval: 5s
       timeout: 5s
       retries: 5

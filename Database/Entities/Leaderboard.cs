@@ -19,4 +19,5 @@ public class XpGuildUserRank
     public long Id {get; set;}
     public required GuildUser User {get; set;}
     public int Exp {get; set;}
+    public DateTime LastExp {get; set;} = DateTime.UtcNow;
 }

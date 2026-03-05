@@ -12,7 +12,6 @@ using Serilog;
 using Serilog.Core;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-
 public class BottyService : BackgroundService
 {
     private readonly IServiceProvider _services;
@@ -103,39 +102,44 @@ public class BottyService : BackgroundService
                 }
             }
             else
-            // Leaderboard handling
-            if (data.Content?.Count() > 5)
-            {
-                using var scope = ServiceLocator.Services.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-                // Check if this even is a guild
-                var guild_id = data.GuildId;
-                if (guild_id != null)
+                // Leaderboard handling
+                if (data.Content?.Count() > 5)
                 {
-                    // Fetch the corresponding database object and create it if it doesn't exist
-                    var guild = await db.Guilds.FindAsync((long)guild_id)
-                        ?? db.Guilds.Add(new Database.Guild {Id = (long)guild_id }).Entity;
+                    using var scope = ServiceLocator.Services.CreateScope();
+                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                    // Fetch the corresponding settings and create it if it doesn't exist
-                    var guild_settings = await db.XpGuildSettings.FirstOrDefaultAsync(settings => settings.Guild == guild)
-                    ?? db.XpGuildSettings.Add(new Database.XpGuildSettings{ Guild = guild, active = false }).Entity;
-
-                    if (guild_settings.active)
+                    // Check if this even is a guild
+                    var guild_id = data.GuildId;
+                    var user_id = data.Author.Id;
+                    if (guild_id != null)
                     {
-                        var guild_user = await db.GuildUsers.FirstOrDefaultAsync(user => user.Guild == guild)
-                        ?? db.GuildUsers.Add(new Database.GuildUser{ Guild = guild }).Entity;
+                        // Fetch the corresponding database object and create it if it doesn't exist
+                        var guild = await db.Guilds.FindAsync((long)guild_id)
+                            ?? db.Guilds.Add(new Database.Guild { Id = (long)guild_id }).Entity;
 
-                        var user_xp = await db.XpGuildUsers.FirstOrDefaultAsync(user => user.User == guild_user)
-                        ?? db.XpGuildUsers.Add(new Database.XpGuildUserRank{ User = guild_user, Exp = 0 }).Entity;
+                        // Fetch the corresponding settings and create it if it doesn't exist
+                        var guild_settings = await db.XpGuildSettings.FirstOrDefaultAsync(settings => settings.Guild == guild)
+                        ?? db.XpGuildSettings.Add(new Database.XpGuildSettings { Guild = guild, active = false }).Entity;
 
-                        user_xp.Exp += Random.Shared.Next(15, 25);
-                        await db.SaveChangesAsync();
+                        if (guild_settings.active)
+                        {
+                            var guild_user = await db.GuildUsers.FirstOrDefaultAsync(user => user.Guild == guild && user.Id == (long)user_id)
+                            ?? db.GuildUsers.Add(new Database.GuildUser { Guild = guild, Id = (long)user_id }).Entity;
+
+                            var user_xp = await db.XpGuildUsers.FirstOrDefaultAsync(user => user.User == guild_user)
+                            ?? db.XpGuildUsers.Add(new Database.XpGuildUserRank { User = guild_user, Exp = 0 }).Entity;
+                            if ((DateTime.UtcNow - user_xp.LastExp).TotalSeconds >= 60)
+                            {
+                                user_xp.Exp += Random.Shared.Next(15, 25);
+                                user_xp.LastExp = DateTime.UtcNow;
+                                await db.SaveChangesAsync();
+
+                            }
+                        }
                     }
+
                 }
-                
-            }
- 
+
         };
 
         // Connect to the gateway

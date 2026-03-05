@@ -32,6 +32,7 @@ public class LevelCommands : ModuleBase
 
         // Check if this even is a guild
         var guild_id = Context.GuildId;
+        var user_id = Context.Message.Author.Id;
         if (guild_id != null)
         {
             // Fetch the corresponding database object and create it if it doesn't exist
@@ -44,8 +45,8 @@ public class LevelCommands : ModuleBase
 
             if (guild_settings.active)
             {
-                var guild_user = await db.GuildUsers.FirstOrDefaultAsync(user => user.Guild == guild)
-                ?? db.GuildUsers.Add(new Database.GuildUser{ Guild = guild }).Entity;
+                var guild_user = await db.GuildUsers.FirstOrDefaultAsync(user => user.Guild == guild && user.Id == (long)user_id)
+                ?? db.GuildUsers.Add(new Database.GuildUser{ Guild = guild, Id = (long)user_id }).Entity;
 
                 var user_xp = await db.XpGuildUsers.FirstOrDefaultAsync(user => user.User == guild_user)
                 ?? db.XpGuildUsers.Add(new Database.XpGuildUserRank{ User = guild_user, Exp = 0 }).Entity;
