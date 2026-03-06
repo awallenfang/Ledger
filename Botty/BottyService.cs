@@ -3,7 +3,6 @@ using Database;
 using Fluxer.Net;
 using Fluxer.Net.Commands;
 using Fluxer.Net.Data.Enums;
-using Fluxer.Net.Data.Models;
 using Fluxer.Net.Gateway.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,30 +11,34 @@ using Serilog;
 using Serilog.Core;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 public class BottyService : BackgroundService
 {
     private readonly IServiceProvider _services;
+    private readonly IConfiguration _config;
+    private readonly ILogger<BottyService> _logger;
 
+    private FluxerClient _client;
+    private CommandService _commands;
 
-    public BottyService(IServiceProvider services)
+    public BottyService(IServiceProvider services, IConfiguration config, ILogger<BottyService> logger)
     {
         _services = services;
+        _config = config;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var scope = _services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
         // Your Fluxer token
-        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-        var token = config["TOKEN"];
+        var token = _config["TOKEN"]
+            ?? throw new InvalidOperationException("TOKEN is missing from configuration."); ;
 
         // Create the clients
-        var client = new FluxerClient(token, new FluxerConfig
+        _client = new FluxerClient(token, new FluxerConfig
         {
-            RestSerilog = Log.Logger as Logger,
-            GatewaySerilog = Log.Logger as Logger,
+            RestSerilog = (Logger)Log.Logger,
+            GatewaySerilog = (Logger)Log.Logger,
             EnableRateLimiting = true,
             ReconnectAttemptDelay = 2,
             IgnoredGatewayEvents = new()
@@ -44,111 +47,107 @@ public class BottyService : BackgroundService
             },
             Presence = new PresenceUpdateGatewayData(Status.Online)
         });
-        // var apiClient = new ApiClient(token, new() 
-        // {
-        //     Serilog = Log.Logger as Logger,
-        //     EnableRateLimiting = true,
-        // });
 
-        // var gatewayClient = new GatewayClient(token, new() 
-        // {
-        //     Serilog = Log.Logger as Logger,
-        //     EnableRateLimiting = true,
-        //     ReconnectAttemptDelay = 2,
-        //     IgnoredGatewayEvents = new()
-        //     {
-        //         "PRESENCE_UPDATE"   // Ignore users online/offlince changes
-        //     },
-        //     Presence = new PresenceUpdateGatewayData(Status.Online)
-        // });
-
-        var commands = new CommandService(
-            Log.Logger as Logger,
+        _commands = new CommandService(
+            (Logger)Log.Logger,
             _services
         );
-        // var commands = new CommandService(
-        //     '!',
-        //     Log.Logger as Logger,
-        //     null
-        // );
 
-        await commands.AddModulesAsync(Assembly.GetExecutingAssembly());
+        await _commands.AddModulesAsync(Assembly.GetExecutingAssembly());
 
-        Log.Information("Registered {ModuleCount} command module(s) with {CommandCount} command(s)",
-            commands.Modules.Count, commands.Commands.Count());
-        client.Gateway.Ready += (data) =>
+        _logger.LogInformation("Registered {ModuleCount} command module(s) with {CommandCount} command(s)",
+            _commands.Modules.Count, _commands.Commands.Count());
+
+
+        _client.Gateway.Ready += (data) =>
         {
-            Log.Information("Bot is ready! Logged in as {Username}", data.User.Username);
-            Log.Information("Connected to {GuildCount} guilds!", data.Guilds.Count());
+            _logger.LogInformation("Bot is ready! Logged in as {Username}", data.User.Username);
+            _logger.LogInformation("Connected to {GuildCount} guilds!", data.Guilds.Count());
         };
 
-        client.Gateway.MessageCreate += async (data) =>
-        {
-            if (data.Author == null || data.Author.IsBot) return;
-
-
-            int argPos = 0;
-            if (data.Content?.StartsWith('!') == true)
-            {
-                argPos = 1;
-
-                var context = new CommandContext(client, data);
-
-                var result = await commands.ExecuteAsync(context, argPos);
-
-                if (!result.IsSuccess)
-                {
-                    Log.Warning("Command failed: {Error}", result);
-                }
-            }
-            else
-                // Leaderboard handling
-                if (data.Content?.Count() > 5)
-                {
-                    using var scope = ServiceLocator.Services.CreateScope();
-                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-                    // Check if this even is a guild
-                    var guild_id = data.GuildId;
-                    var user_id = data.Author.Id;
-                    if (guild_id != null)
-                    {
-                        // Fetch the corresponding database object and create it if it doesn't exist
-                        var guild = await db.Guilds.FindAsync((long)guild_id)
-                            ?? db.Guilds.Add(new Database.Guild { Id = (long)guild_id }).Entity;
-
-                        // Fetch the corresponding settings and create it if it doesn't exist
-                        var guild_settings = await db.XpGuildSettings.FirstOrDefaultAsync(settings => settings.Guild == guild)
-                        ?? db.XpGuildSettings.Add(new Database.XpGuildSettings { Guild = guild, active = false }).Entity;
-
-                        if (guild_settings.active)
-                        {
-                            var guild_user = await db.GuildUsers.FirstOrDefaultAsync(user => user.Guild == guild && user.Id == (long)user_id)
-                            ?? db.GuildUsers.Add(new Database.GuildUser { Guild = guild, Id = (long)user_id }).Entity;
-
-                            var user_xp = await db.XpGuildUsers.FirstOrDefaultAsync(user => user.User == guild_user)
-                            ?? db.XpGuildUsers.Add(new Database.XpGuildUserRank { User = guild_user, Exp = 0 }).Entity;
-                            if ((DateTime.UtcNow - user_xp.LastExp).TotalSeconds >= 60)
-                            {
-                                user_xp.Exp += Random.Shared.Next(15, 25);
-                                user_xp.LastExp = DateTime.UtcNow;
-                                await db.SaveChangesAsync();
-
-                            }
-                        }
-                    }
-
-                }
-
-        };
+        _client.Gateway.MessageCreate += HandleMessageAsync;
 
         // Connect to the gateway
-        await client.Gateway.ConnectAsync();
+        await _client.Gateway.ConnectAsync();
 
-        Log.Information("Bot is running! Press Ctrl+C to exit.");
+        _logger.LogInformation("Bot is running! Press Ctrl+C to exit.");
 
         // Keep the application running
         await Task.Delay(Timeout.Infinite, stoppingToken);
 
     }
+
+    private async void HandleMessageAsync(MessageGatewayData data)
+    {
+        try
+        {
+            if (data.Author == null || data.Author.IsBot) return;
+
+            if (data.Content?.StartsWith('!') == true)
+            {
+                await HandleCommandAsync(data);
+            }
+            else
+            {
+                await HandleExpAsync(data);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unhandled exception in message handler");
+
+        }
+    }
+
+    private async Task HandleCommandAsync(MessageGatewayData data)
+    {
+        int argPos = 1;
+
+        var context = new CommandContext(_client, data);
+
+        var result = await _commands.ExecuteAsync(context, argPos);
+
+        if (!result.IsSuccess)
+        {
+            _logger.LogWarning("Command failed: {Error}", result);
+        }
+    }
+    private async Task HandleExpAsync(MessageGatewayData data)
+    {
+        if (data.Content?.Length <= 5) return;
+        using var scope = ServiceLocator.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        // Check if this even is a guild
+        var guildId = data.GuildId;
+        var userId = data.Author.Id;
+        if (guildId != null)
+        {
+            // Fetch the corresponding database object and create it if it doesn't exist
+            var guild = await db.Guilds.FindAsync((long)guildId)
+                ?? db.Guilds.Add(new Database.Guild { Id = (long)guildId }).Entity;
+
+            // Fetch the corresponding settings and create it if it doesn't exist
+            var guildSettings = await db.XpGuildSettings.FirstOrDefaultAsync(settings => settings.Guild == guild)
+            ?? db.XpGuildSettings.Add(new Database.XpGuildSettings { Guild = guild, Active = false }).Entity;
+
+            if (guildSettings.Active)
+            {
+                var guildUser = await db.GuildUsers.FirstOrDefaultAsync(user => user.Guild == guild && user.Id == (long)userId)
+                ?? db.GuildUsers.Add(new Database.GuildUser { Guild = guild, Id = (long)userId }).Entity;
+
+                var userXp = await db.XpGuildUsers.FirstOrDefaultAsync(user => user.User == guildUser)
+                ?? db.XpGuildUsers.Add(new Database.XpGuildUserRank { User = guildUser, Exp = 0 }).Entity;
+                if ((DateTime.UtcNow - userXp.LastExp).TotalSeconds >= 60)
+                {
+                    userXp.Exp += Random.Shared.Next(15, 25);
+                    userXp.LastExp = DateTime.UtcNow;
+
+                }
+            }
+            await db.SaveChangesAsync();
+        }
+
+    }
+
 }

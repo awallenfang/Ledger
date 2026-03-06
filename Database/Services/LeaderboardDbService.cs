@@ -22,11 +22,16 @@ public class LeaderboardDbService
         }
 
         var guild_settings = await _db.XpGuildSettings.FirstOrDefaultAsync(settings => settings.Guild.Id == guild.Id)
-            ?? _db.XpGuildSettings.Add(new Database.XpGuildSettings{ Guild = guild, active = false }).Entity;
+            ?? _db.XpGuildSettings.Add(new Database.XpGuildSettings{ Guild = guild, Active = false }).Entity;
 
         var guild_user = await _db.GuildUsers.FirstOrDefaultAsync(user => user.Guild.Id == guild.Id)
             ?? _db.GuildUsers.Add(new Database.GuildUser{ Guild = guild }).Entity;
 
         return await _db.XpGuildUsers.Where(user => user.User.Guild.Id == guildId).ToListAsync();
     }
+
+    public async Task<XpGuildSettings> GetOrCreateSettingsAsync(Guild guild) =>
+        await _db.XpGuildSettings.FirstOrDefaultAsync(s => s.Guild == guild)
+        ?? _db.XpGuildSettings.Add(new XpGuildSettings { Guild = guild, Active = false }).Entity;
+
 }

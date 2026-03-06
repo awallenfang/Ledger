@@ -9,17 +9,30 @@ using Database;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Fluxer.Net.Data.Enums;
+using Database.Services;
+using Microsoft.Extensions.Hosting;
 
 namespace Botty.Modules;
 
 public class LevelCommands : ModuleBase
 {
+    private static int CalculateLevel(int exp) => (int)(exp / 200.0);
+
     [Command("leaderboard")]
     [Summary("A link to the online leaderboard")]
     [RequireContext(ContextType.Guild)]
     public async Task LeaderboardCommand()
     {
-        await ReplyAsync($"This server's leaderboard is available at https://botty.ritzin.dev/leaderboard/{Context.GuildId}");
+        using var scope = ServiceLocator.Services.CreateScope();
+        var _env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+        if (_env.IsDevelopment())
+        {
+            await ReplyAsync($"This server's leaderboard is available at http://127.0.0.1:5248/leaderboard/{Context.GuildId}");
+        }
+        else
+        {
+            await ReplyAsync($"This server's leaderboard is available at https://botty.ritzin.dev/leaderboard/{Context.GuildId}");
+        }
     }
 
     [Command("rank")]
@@ -29,33 +42,31 @@ public class LevelCommands : ModuleBase
     {
         using var scope = ServiceLocator.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var guildService = scope.ServiceProvider.GetRequiredService<GuildDbService>();
+        var leaderboardService = scope.ServiceProvider.GetRequiredService<LeaderboardDbService>();
 
         // Check if this even is a guild
-        var guild_id = Context.GuildId;
-        var user_id = Context.Message.Author.Id;
-        if (guild_id != null)
+        var guildId = Context.GuildId!;
+        var userId = Context.Message.Author.Id;
+        
+        // Fetch the corresponding database object and create it if it doesn't exist
+        var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
+
+        // Fetch the corresponding settings and create it if it doesn't exist
+        var guildSettings = await leaderboardService.GetOrCreateSettingsAsync(guild);
+
+        if (guildSettings.Active)
         {
-            // Fetch the corresponding database object and create it if it doesn't exist
-            var guild = await db.Guilds.FindAsync((long)guild_id)
-                ?? db.Guilds.Add(new Database.Guild {Id = (long)guild_id }).Entity;
+            var guildUser = await db.GuildUsers.FirstOrDefaultAsync(user => user.Guild == guild && user.Id == (long)userId)
+            ?? db.GuildUsers.Add(new Database.GuildUser{ Guild = guild, Id = (long)userId }).Entity;
 
-            // Fetch the corresponding settings and create it if it doesn't exist
-            var guild_settings = await db.XpGuildSettings.FirstOrDefaultAsync(settings => settings.Guild == guild)
-            ?? db.XpGuildSettings.Add(new Database.XpGuildSettings{ Guild = guild, active = false }).Entity;
+            var userXp = await db.XpGuildUsers.FirstOrDefaultAsync(user => user.User == guildUser)
+            ?? db.XpGuildUsers.Add(new Database.XpGuildUserRank{ User = guildUser, Exp = 0 }).Entity;
 
-            if (guild_settings.active)
-            {
-                var guild_user = await db.GuildUsers.FirstOrDefaultAsync(user => user.Guild == guild && user.Id == (long)user_id)
-                ?? db.GuildUsers.Add(new Database.GuildUser{ Guild = guild, Id = (long)user_id }).Entity;
-
-                var user_xp = await db.XpGuildUsers.FirstOrDefaultAsync(user => user.User == guild_user)
-                ?? db.XpGuildUsers.Add(new Database.XpGuildUserRank{ User = guild_user, Exp = 0 }).Entity;
-
-                await ReplyAsync($"You have {user_xp.Exp} experience. And are thus level {(int)(user_xp.Exp / 200.0)}");
-            } else
-            {
-                await ReplyAsync($"Leveling is currently disabled on this server");
-            }
+            await ReplyAsync($"You have {userXp.Exp} experience. And are thus level {CalculateLevel(userXp.Exp)}");
+        } else
+        {
+            await ReplyAsync($"Leveling is currently disabled on this server");
         }
     }
 
@@ -69,55 +80,51 @@ public class LevelCommands : ModuleBase
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Check if this even is a guild
-        var guild_id = Context.GuildId;
-        if (guild_id == null)
+        var guildId = Context.GuildId;
+        if (guildId == null)
         {
             await ReplyAsync($"This seems to not be a guild, so leveling is disabled.");
             return;
         }
-        
+
+        var guildService = scope.ServiceProvider.GetRequiredService<GuildDbService>();
+        var leaderboardService = scope.ServiceProvider.GetRequiredService<LeaderboardDbService>();
+
         // Fetch the corresponding database object and create it if it doesn't exist
-        var guild = await db.Guilds.FindAsync((long)guild_id)
-            ?? db.Guilds.Add(new Database.Guild {Id = (long)guild_id }).Entity;
+        var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
 
         // Fetch the corresponding settings and create it if it doesn't exist
-        var guild_settings = await db.XpGuildSettings.FirstOrDefaultAsync(global => global.Guild == guild)
-            ?? db.XpGuildSettings.Add(new Database.XpGuildSettings{ Guild = guild, active = false }).Entity;
- 
-        if (guild_settings.active == false)
-        {
-            if (message.ToLower().Trim() == "init" || message.ToLower().Trim() == "on")
-            {
-                guild_settings.active = true;
-                await db.SaveChangesAsync();
+        var guildSettings = await leaderboardService.GetOrCreateSettingsAsync(guild);
 
-                await ReplyAsync($"Leveling has been enabled on this server");
-            } 
-            else if (message.ToLower().Trim() == "off")
-            {
-                await ReplyAsync($"Leveling is already disabled");
-            } 
-            else
-            {
-                await ReplyAsync($"I do not understand what you're saying");
-            }
-        } else
+        var normalizedMessage = message.ToLower().Trim();
+        switch (normalizedMessage)
         {
-            if (message.ToLower().Trim() == "off")
-            {
-                 guild_settings.active = false;
-                await db.SaveChangesAsync();
+            case "init":
+            case "on":
+                if (guildSettings.Active) 
+                    await ReplyAsync("Leveling is already enabled on this server.");
+                else
+                {
+                    guildSettings.Active = true;
+                    await db.SaveChangesAsync();
+                    await ReplyAsync("Leveling has been enabled on this server.");
 
-                await ReplyAsync($"Leveling has been disabled on this server");
-            } 
-            else if (message.ToLower().Trim() == "init" || message.ToLower().Trim() == "on")
-            {
-                await ReplyAsync($"Leveling is already enabled on this server");
-            } 
-            else
-            {
-                await ReplyAsync($"I do not understand what you're saying");
-            }
+                }
+                break;
+            case "off":
+                if (!guildSettings.Active)
+                    await ReplyAsync("Leveling is already disabled.");
+                else
+                {
+                    guildSettings.Active = false;
+                    await db.SaveChangesAsync();
+                    await ReplyAsync("Leveling has been disabled on this server.");
+                }
+                break;
+            default:
+                await ReplyAsync("I do not understand what you're saying.");
+                break;
+
         }
 
     }

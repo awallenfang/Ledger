@@ -9,7 +9,7 @@ public class XpGuildSettings
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long Id {get; set;}
     public required Guild Guild { get; set;}
-    public bool active {get; set;} = false;
+    public bool Active {get; set;} = false;
 }
 
 public class XpGuildUserRank
