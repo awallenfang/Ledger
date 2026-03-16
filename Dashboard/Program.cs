@@ -1,35 +1,49 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Dashboard.Components;
 using Database;
 using Database.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Serilog;
-using Serilog.Core;
 using Botty.Services;
 using Fluxify.Bot;
-using Fluxify.Commands;
 using Fluxify.Core;
-using Fluxify.Dto.Users;
 using Fluxify.Gateway;
-using Fluxify.Gateway.Model.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication.OAuth;
-using System.Net.Http.Headers;
-using System.Text.Json;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = "Fluxer";
+})
+.AddCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.ExpireTimeSpan = TimeSpan.FromHours(24);
+    options.SlidingExpiration = true;
+})
+.AddOAuth<FluxerOAuthOptions, FluxerOAuthHandler>("Fluxer", options =>
+{
+    options.ClientId     = builder.Configuration["Fluxer:ClientId"]!;
+    options.ClientSecret = builder.Configuration["Fluxer:ClientSecret"]!;
+    options.GuildId      = builder.Configuration["Fluxer:GuildId"] ?? string.Empty;
+    options.Permissions  = builder.Configuration["Fluxer:Permissions"] ?? string.Empty;
+    options.Scope        = "identify guilds";
 
+    options.AuthorizationEndpoint = "https://web.fluxer.app/oauth2/authorize";
+    options.TokenEndpoint = "https://api.fluxer.app/oauth2/token";
+    options.UserInformationEndpoint = "https://api.fluxer.app/oauth2/userinfo";
 
+    options.CallbackPath = "/signin-fluxer";
+    options.SaveTokens   = true;
+});
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddAuthorization();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
@@ -44,30 +58,15 @@ builder.Services.AddSingleton(new GatewayConfig()
 {
 });
 builder.Services.AddSingleton(sp => new Bot("!", sp.GetRequiredService<FluxerConfig>(), sp.GetRequiredService<GatewayConfig>()));
-// var token = builder.Configuration["TOKEN"];
 
-// // Create the clients
-// var client = new FluxerClient(token, new FluxerConfig
-// {
-//     RestSerilog = Log.Logger as Logger,
-//     GatewaySerilog = null,
-//     EnableRateLimiting = true,
-//     ReconnectAttemptDelay = 2,
-//     IgnoredGatewayEvents = new()
-//     {
-//         "PRESENCE_UPDATE"   // Ignore users online/offlince changes
-//     },
-//     Presence = new PresenceUpdateGatewayData(Status.Online),
-
-// });
-
-// builder.Services.AddSingleton(client);
 builder.Services.AddScoped<BottyAPIService>();
 
 var app = builder.Build();
 
+
 using var scope = app.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+await db.Database.MigrateAsync();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -78,10 +77,22 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapGet("/login", () => Results.Challenge(
+    new AuthenticationProperties { RedirectUri = "/" },
+    ["Fluxer"]
+));
+
+app.MapGet("/logout", async (HttpContext ctx) =>
+{
+    await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.Redirect("/");
+});
 app.Run();

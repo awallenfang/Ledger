@@ -1,0 +1,29 @@
+@page "/profile"
+@attribute [Authorize]
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+
+<h3>You are logged in!</h3>
+
+<p>Username: @User.FindFirstValue(ClaimTypes.Name)</p>
+<p>Email: @User.FindFirstValue(ClaimTypes.Email)</p>
+<p>Global name: @User.FindFirstValue("fluxer:global_name")</p>
+
+<a href="/logout" class="btn btn-secondary">Logout</a>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private ClaimsPrincipal User { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationStateTask is not null)
+        {
+            var state = await AuthenticationStateTask;
+            User = state.User;
+        }
+    }
+}
