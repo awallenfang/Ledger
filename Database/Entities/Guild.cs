@@ -14,6 +14,7 @@ public class GuildUser
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long Id {get; set;}
+    public long UserId {get; set;}
     public required Guild Guild {get; set;}
     public string Name {get; set;} = string.Empty;
 }

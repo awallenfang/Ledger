@@ -1,0 +1,20 @@
+{
+  "name": "dashboard",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "sass Styles/app.scss --load-path=node_modules wwwroot/css/app.css --no-source-map",
+    "watch:css": "sass --load-path=node_modules --watch Styles/app.scss wwwroot/css/app.css --no-source-map"
+
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "bootstrap": "^5.3.8",
+    "sass": "^1.98.0"
+  }
+}

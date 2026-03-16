@@ -12,7 +12,7 @@ using Fluxify.Commands.Exceptions;
 
 namespace Botty.Modules;
 
-public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContext db, GuildDbService guildService, LeaderboardDbService leaderboardService)
+public class GameCommands(CommandContext ctx, IHostEnvironment env, AppDbContext db, GuildDbService guildService, LeaderboardDbService leaderboardService)
 {
     private static int CalculateLevel(int exp) => (int)(exp / 200.0);
 
@@ -61,17 +61,16 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
             var userXp = await db.XpGuildUsers.FirstOrDefaultAsync(user => user.User == guildUser)
             ?? db.XpGuildUsers.Add(new Database.XpGuildUserRank{ User = guildUser, Exp = 0 }).Entity;
 
-            await ctx.ReplyAsync($"You have {userXp.Exp} experience. And are thus level {userXp.Level}");
+            await ctx.ReplyAsync($"You have {userXp.Exp} experience. And are thus level {CalculateLevel(userXp.Exp)}");
         } else
         {
             await ctx.ReplyAsync($"Leveling is currently disabled on this server");
         }
-        await db.SaveChangesAsync();
     }
 
     public async Task XpCommand(AppDbContext db)
     {
-        var message = ctx.Message.Content.Split(" ", 2)[1];
+        var message = ctx.Message.Content;
 
         // Check if this even is a guild
         if (ctx.Message.Channel is not GuildTextChannel guildTextChannel)

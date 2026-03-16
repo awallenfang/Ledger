@@ -13,13 +13,14 @@ services:
     develop:
       watch:
         - action: sync
-          path: .
+          path: ./Botty
           target: /
           initial_sync: true
+
   dashboard:
     build: 
       context: .
-      dockerfile: Dashboard/Dockerfile-dev
+      dockerfile: Dashboard/Dockerfile.dev
     restart: always
     ports:
         - "5248:5248"
@@ -33,10 +34,11 @@ services:
     develop:
       watch:
         - action: sync
-          path: .
-          target: /
-          initial_sync: true
-
+          path: ./Dashboard
+          target: /src/Dashboard
+        - action: sync
+          path: ./Database
+          target: /src/Database
   db:
     image: postgres
     restart: always

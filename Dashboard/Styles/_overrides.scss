@@ -1,0 +1,129 @@
+[data-bs-theme="light"] {
+    .btn-primary {
+        --bs-btn-bg: #{$primary};
+        --bs-btn-border-color: #{$primary};
+        --bs-btn-hover-bg: #{$primary-dark};
+        --bs-btn-hover-border-color: #{$primary-dark};
+        --bs-btn-active-bg: #{$primary-dark};
+        --bs-btn-active-border-color: #{$primary-dark};
+        --bs-btn-disabled-bg: #{$primary};
+        --bs-btn-disabled-border-color: #{$primary};
+        --bs-btn-color: #1A0533;
+        --bs-btn-hover-color: #1A0533;
+        --bs-btn-active-color: #1A0533;
+        --bs-btn-disabled-color: #1A0533;
+    }
+
+    .btn-secondary {
+        --bs-btn-bg: #{$secondary};
+        --bs-btn-border-color: #{$secondary};
+        --bs-btn-hover-bg: #{shade-color($secondary, 15%)};
+        --bs-btn-hover-border-color: #{shade-color($secondary, 15%)};
+        --bs-btn-active-bg: #{shade-color($secondary, 20%)};
+        --bs-btn-active-border-color: #{shade-color($secondary, 20%)};
+        --bs-btn-disabled-bg: #{$secondary};
+        --bs-btn-disabled-border-color: #{$secondary};
+        --bs-btn-color: #F0E8FF;
+        --bs-btn-hover-color: #F0E8FF;
+        --bs-btn-active-color: #F0E8FF;
+        --bs-btn-disabled-color: #F0E8FF;
+    }
+
+    .btn-outline-primary {
+        --bs-btn-color: #{$primary};
+        --bs-btn-border-color: #{$primary};
+        --bs-btn-hover-bg: #{$primary};
+        --bs-btn-hover-border-color: #{$primary};
+        --bs-btn-hover-color: #1A0533;
+        --bs-btn-active-bg: #{$primary-dark};
+        --bs-btn-active-border-color: #{$primary-dark};
+        --bs-btn-active-color: #1A0533;
+    }
+
+    .navbar {
+    background-color: #FFFFFF;
+    border-bottom: 0.5px solid #DDD0F9;
+
+    .navbar-brand {
+        color: #1A0533;
+    }
+
+    .nav-link {
+        color: rgba(#1A0533, 0.7);
+
+        &:hover {
+            color: #1A0533;
+        }
+
+        &.active {
+            color: $primary;
+        }
+    }
+}
+}
+
+[data-bs-theme="dark"] {
+    .btn-primary {
+        --bs-btn-bg: #{$primary};
+        --bs-btn-border-color: #{$primary};
+        --bs-btn-hover-bg: #{tint-color($primary, 10%)};
+        --bs-btn-hover-border-color: #{tint-color($primary, 10%)};
+        --bs-btn-active-bg: #{tint-color($primary, 15%)};
+        --bs-btn-active-border-color: #{tint-color($primary, 15%)};
+        --bs-btn-disabled-bg: #{$primary};
+        --bs-btn-disabled-border-color: #{$primary};
+        --bs-btn-color: #1A0533;
+        --bs-btn-hover-color: #1A0533;
+        --bs-btn-active-color: #1A0533;
+        --bs-btn-disabled-color: #1A0533;
+    }
+
+    .btn-secondary {
+        --bs-btn-bg: #{$secondary};
+        --bs-btn-border-color: #{$secondary};
+        --bs-btn-hover-bg: #{tint-color($secondary, 10%)};
+        --bs-btn-hover-border-color: #{tint-color($secondary, 10%)};
+        --bs-btn-active-bg: #{tint-color($secondary, 15%)};
+        --bs-btn-active-border-color: #{tint-color($secondary, 15%)};
+        --bs-btn-disabled-bg: #{$secondary};
+        --bs-btn-disabled-border-color: #{$secondary};
+        --bs-btn-color: #F0E8FF;
+        --bs-btn-hover-color: #F0E8FF;
+        --bs-btn-active-color: #F0E8FF;
+        --bs-btn-disabled-color: #F0E8FF;
+    }
+
+    .btn-outline-primary {
+        --bs-btn-color: #{tint-color($primary, 20%)};
+        --bs-btn-border-color: #{tint-color($primary, 20%)};
+        --bs-btn-hover-bg: #{$primary};
+        --bs-btn-hover-border-color: #{$primary};
+        --bs-btn-hover-color: #1A0533;
+        --bs-btn-active-bg: #{tint-color($primary, 10%)};
+        --bs-btn-active-border-color: #{tint-color($primary, 10%)};
+        --bs-btn-active-color: #1A0533;
+    }
+
+    .navbar {
+        background-color: #{$body-bg};
+
+        .navbar-brand {
+            color: #F0E8FF;
+        }
+
+        .nav-link {
+            color: rgba($primary-light, 0.8);
+
+            &:hover {
+                color: $primary;
+            }
+
+            &.active {
+                color: $primary-light;
+            }
+        }
+    }
+}
+
+
+

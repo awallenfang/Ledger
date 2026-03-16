@@ -1,4 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs
 WORKDIR /src
 COPY ["Botty/Botty.csproj", "Botty/"]
 COPY ["Dashboard/Dashboard.csproj", "Dashboard/"]
@@ -10,10 +13,5 @@ COPY Botty/ Botty/
 
 
 WORKDIR "/src/Dashboard"
-# RUN dotnet publish -c Release -o /app/out
-ENTRYPOINT ["dotnet", "run", "--project", "."]
 
-# FROM mcr.microsoft.com/dotnet/aspnet:10.0
-# WORKDIR /app
-# COPY --from=build /app/out .
-
+ENTRYPOINT ["sh", "./entrypoint.sh"]

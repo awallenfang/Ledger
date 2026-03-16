@@ -1,0 +1,44 @@
+$primary:            #B76FFF;
+$primary-light:      #D4A8FF;
+$primary-dark:       #7B20E0;
+$secondary:          #9A72CC;
+$accent:             #FF6FE8;
+
+/* Semantic */
+$success:            #3DDA7F;
+$info:               #56CCFF;
+$warning:            #FBB429;
+$danger:             #FF6363;
+$link-color:         #C47FFF;
+
+/* Dark mode neutrals */
+$body-bg:            #0F0820;
+$body-bg-alt:        #1C1133;
+$border-color:       #3D2A60;
+$body-color:         #F0E8FF;
+$secondary-color:    #A890CC;
+
+// $primary: #9D38FF;
+// $secondary: #6C3FA0;
+// $body-bg: #FFFFFF;
+// $body-color: #1A0533;
+// $border-color: #DDD0F9;
+// $link-color: $primary;
+
+$navbar-light-color:                rgba($primary, 0.8);
+$navbar-light-hover-color:          $primary;
+$navbar-light-active-color:         $primary;
+$navbar-light-brand-color:          $primary;
+$navbar-light-brand-hover-color:    shade-color($primary, 10%);
+$navbar-light-toggler-border-color: rgba($primary, 0.3);
+
+$navbar-dark-color:                 rgba($primary, 0.8);
+$navbar-dark-hover-color:           #F0E8FF;
+$navbar-dark-active-color:          #F0E8FF;
+$navbar-dark-brand-color:           #F0E8FF;
+$navbar-dark-brand-hover-color:     #ffffff;
+$navbar-dark-toggler-border-color:  rgba($primary, 0.3);
+
+$navbar-bg:  $body-bg;  // or #FFFFFF for light
+
+$table-bg: $body-bg;

@@ -21,17 +21,20 @@ public class LeaderboardDbService
             return null;
         }
 
-        var guild_settings = await _db.XpGuildSettings.FirstOrDefaultAsync(settings => settings.Guild.Id == guild.Id)
-            ?? _db.XpGuildSettings.Add(new Database.XpGuildSettings{ Guild = guild, Active = false }).Entity;
+        var guild_settings = await GetOrCreateSettingsAsync(guild);
 
         var guild_user = await _db.GuildUsers.FirstOrDefaultAsync(user => user.Guild.Id == guild.Id)
             ?? _db.GuildUsers.Add(new Database.GuildUser{ Guild = guild }).Entity;
 
-        return await _db.XpGuildUsers.Where(user => user.User.Guild.Id == guildId).ToListAsync();
+        return await _db.XpGuildUsers.Where(user => user.User.Guild.Id == guildId).Include(u => u.User).OrderByDescending(u => u.Exp).ToListAsync();
     }
 
     public async Task<XpGuildSettings> GetOrCreateSettingsAsync(Guild guild) =>
         await _db.XpGuildSettings.FirstOrDefaultAsync(s => s.Guild == guild)
         ?? _db.XpGuildSettings.Add(new XpGuildSettings { Guild = guild, Active = false }).Entity;
+
+    public async Task<XpGuildUserRank> GetOrCreateUserRankAsync(GuildUser guildUser) =>
+        await _db.XpGuildUsers.FirstOrDefaultAsync(u => u.User == guildUser)
+        ?? _db.XpGuildUsers.Add(new XpGuildUserRank { User = guildUser, Exp = 0 }).Entity;
 
 }

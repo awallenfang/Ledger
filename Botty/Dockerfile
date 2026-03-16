@@ -3,7 +3,6 @@ WORKDIR /src
 COPY ["Botty/Botty.csproj", "Botty/"]
 COPY ["Dashboard/Dashboard.csproj", "Dashboard/"]
 COPY ["Database/Database.csproj", "Database/"]
-# COPY ["Fluxer.Net/Fluxer.Net/Fluxer.Net.csproj", "Fluxer.Net/"]
 RUN dotnet restore Botty/Botty.csproj
 COPY Dashboard/ Dashboard/
 COPY Database/ Database/

@@ -7,6 +7,7 @@ RUN dotnet restore Dashboard/Dashboard.csproj
 COPY Dashboard/ Dashboard/
 COPY Database/ Database/
 COPY Botty/ Botty/
+COPY Fluxify/ Fluxify/
 
 
 WORKDIR "/src/Dashboard"

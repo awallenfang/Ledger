@@ -1,4 +1,4 @@
-using Fluxer.Net;
+using Fluxify.Bot;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,16 +6,16 @@ namespace Botty.Services;
 
 public class BottyAPIService
 {
-    private readonly FluxerClient _client;
+    private readonly Bot _bot;
 
-    public BottyAPIService(FluxerClient client)
+    public BottyAPIService(Bot bot)
     {
-        _client = client;
+        _bot = bot;
     }
 
     public async Task<string> GetUserName(long user_id)
-    {
-        var user = await _client.Rest.GetUser((ulong)user_id);
-        return user.Username;
+    {   
+        var user = await _bot.Rest.Users[(ulong)user_id].GetAsync();
+        return user!.Username;
     }
 }

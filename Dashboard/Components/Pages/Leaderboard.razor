@@ -30,7 +30,7 @@ else
             <td>@user.Exp</td>
             <td>
                 <div style="width: 10rem; background: #eee; border-radius: 4px; vertical-align: middle">
-                    <div style="width: @( (user.Exp % 200) / 2.0 )%; 
+                    <div style="width: @( (user.Exp % 100) / 2.0 )%; 
                                 background: #4caf50; 
                                 height: 10px; 
                                 border-radius: 4px;">
@@ -47,16 +47,14 @@ else
     [Parameter] public string? guild_id { get; set; }
     protected override async Task OnInitializedAsync()
     {
-        // Simulate asynchronous loading to demonstrate streaming rendering
-        await Task.Delay(500);
-
         var db_users = await db.GetGuildLeaderboard((long)Convert.ToInt64(guild_id)) ?? new List<XpGuildUserRank>();
         var actual_users = new List<User>();
         foreach (var user in db_users) {
             actual_users.Add(
                 new User {
-                    Name = await api.GetUserName(user.User.Id),
-                    Exp = user.Exp
+                    Name = await api.GetUserName(user.User.UserId),
+                    Exp = user.Exp,
+                    CurrentLevel = user.Level,
                 }
             );
         }
@@ -68,6 +66,6 @@ else
     {
         public string Name { get; set; }
         public int Exp {get; set; }
-        public int CurrentLevel => (int)(Exp/200.0);
+        public int CurrentLevel {get; set; }
     }
 }

@@ -1,11 +1,14 @@
 ﻿using Botty;
+using Botty.Modules;
 using Botty.Services;
 using Database;
 using Database.Services;
-using Fluxer.Net;
-using Fluxer.Net.Commands;
-using Fluxer.Net.Data.Enums;
-using Fluxer.Net.Gateway.Data;
+using Fluxify.Bot;
+using Fluxify.Commands;
+using Fluxify.Core;
+using Fluxify.Dto.Users;
+using Fluxify.Gateway;
+using Fluxify.Gateway.Model.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,17 +19,9 @@ using Serilog.Core;
 using Serilog.Sinks.SystemConsole.Themes;
 using System.Reflection;
 
-Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
-            .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-            .CreateLogger();
-            
-
 
 var host = Host.CreateDefaultBuilder(args)
-    .UseSerilog((context, services, configuration) => configuration
-            .ReadFrom.Services(services)
-            .WriteTo.Console(theme: AnsiConsoleTheme.Code))
+    .ConfigureLogging(l => l.AddConsole())
     .ConfigureServices((context, services) =>
     {
         var connectionString = context.Configuration.GetConnectionString("Default")
@@ -37,6 +32,24 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddHostedService<BottyService>();
         services.AddScoped<GuildDbService>();
         services.AddScoped<LeaderboardDbService>();
+
+        services.AddTransient<UtilCommands>();
+        services.AddTransient<LevelCommands>();
+
+        services.AddScoped<ContextProvider>()
+            .AddScoped(sp => sp.GetRequiredService<ContextProvider>().Context.Value!);
+        services.AddSingleton(sp => new FluxerConfig()
+        {
+            ServiceProvider = sp,
+            Credentials = new BotTokenCredentials(sp.GetRequiredService<IConfiguration>()["token"] ?? throw new InvalidOperationException("TOKEN is missing from configuration."))
+        });
+        services.AddSingleton<HttpClient>(sp => sp.GetRequiredService<FluxerConfig>() is { HttpClientFactory: {} factory } cfg ? factory(cfg) : throw new InvalidOperationException());
+        services.AddSingleton(new GatewayConfig()
+        {
+            IgnoredGatewayEvents = ["PRESENCE_UPDATE"],
+            DefaultPresence = new(UserStatus.Online, CustomStatus: new CustomStatus(Text: "Botty is listening!"))
+        });
+        services.AddSingleton(sp => new Bot("!", sp.GetRequiredService<FluxerConfig>(), sp.GetRequiredService<GatewayConfig>()));
     })
     .Build();
 
@@ -61,3 +74,8 @@ using (var scope = host.Services.CreateScope())
 ServiceLocator.Initialize(host.Services);
 
 await host.RunAsync();
+
+class ContextProvider
+{
+    public AsyncLocal<CommandContext> Context { get; } = new();
+}

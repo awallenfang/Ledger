@@ -1,0 +1,23 @@
+<div class="sparkle-container" aria-hidden="true">
+    @for (int i = 0; i < 20; i++)
+    {
+        <i class="bi bi-stars sparkle" style="@GetStyle(i)"></i>
+    }
+</div>
+
+@code {
+    private string GetStyle(int index)
+    {
+        // Use index as a seed for deterministic but varied values
+        var right = (Random.Shared.Next() * 37 + 11) % 100;
+        var delay = (index * 1.3) % 8;
+        var duration = 8 + (index * 0.7) % 10;
+        var size = 0.8 + (index * 0.15) % 1.5;
+
+        return $"right: {right}%; " +
+               $"bottom: -50px; " +
+               $"font-size: {size}rem; " +
+               $"animation-duration: {duration}s; " +
+               $"animation-delay: -{delay}s;";
+    }
+}
