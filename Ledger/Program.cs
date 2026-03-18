@@ -1,6 +1,6 @@
-﻿using Botty;
-using Botty.Modules;
-using Botty.Services;
+﻿using Ledger;
+using Ledger.Modules;
+using Ledger.Services;
 using Database;
 using Database.Services;
 using Fluxify.Bot;

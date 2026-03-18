@@ -1,18 +1,18 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY ["Botty/Botty.csproj", "Botty/"]
+COPY ["Ledger/Ledger.csproj", "Ledger/"]
 COPY ["Dashboard/Dashboard.csproj", "Dashboard/"]
 COPY ["Database/Database.csproj", "Database/"]
-RUN dotnet restore Botty/Botty.csproj
+RUN dotnet restore Ledger/Ledger.csproj
 COPY Dashboard/ Dashboard/
 COPY Database/ Database/
-COPY Botty/ Botty/
+COPY Ledger/ Ledger/
 
-WORKDIR "/src/Botty"
+WORKDIR "/src/Ledger"
 # RUN dotnet publish -c Release -o /app/out
 ENTRYPOINT ["dotnet", "run", "--project", "."]
 # FROM mcr.microsoft.com/dotnet/aspnet:10.0
 # WORKDIR /app
 # COPY --from=build /app/out .
-# ENTRYPOINT ["dotnet", "Botty.dll"]
+# ENTRYPOINT ["dotnet", "Ledger.dll"]
 

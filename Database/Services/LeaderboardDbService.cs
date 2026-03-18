@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Fluxify.Application.Entities;
 
 namespace Database.Services;
 
-public class LeaderboardEntry {
-    public User User {get; set;}
-    public int Exp {get; set;}
+public class LeaderboardEntry
+{
+    public required User User { get; set; }
+    public int Exp { get; set; }
     public int Level => (int)(Exp / 100.0) + 1;
 }
 
@@ -21,24 +20,33 @@ public class LeaderboardDbService
 
     public async Task<List<XpGuildUserRank>?> GetGuildLeaderboard(long guildId)
     {
-        var guild = await _db.Guilds.FindAsync((long)guildId);
-
-        if (guild == null)
-        {
-            return null;
-        }
+        var guild = await _db.Guilds.FindAsync(guildId);
+        if (guild == null) return null;
 
         var guild_settings = await GetOrCreateSettingsAsync(guild);
 
-        var guild_user = await _db.GuildUsers.FirstOrDefaultAsync(user => user.Guild.Id == guild.Id)
-            ?? _db.GuildUsers.Add(new Database.GuildUser{ Guild = guild }).Entity;
-
-        return await _db.XpGuildUsers.Where(user => user.User.Guild.Id == guildId).Include(u => u.User).OrderByDescending(u => u.Exp).ToListAsync();
+        return await _db.XpGuildUsers
+        .Include(u => u.User)              
+            .ThenInclude(gu => gu.User)
+        .Where(u => u.User.GuildId == guildId)
+        .OrderByDescending(u => u.Exp)
+        .ToListAsync();
     }
 
-    public async Task<List<LeaderboardEntry>> GetGlobalLeaderboard() {
-        // get all users
-        var userXp = await _db.XpGuildUsers.AllAsync();
+    public async Task<List<LeaderboardEntry>> GetGlobalLeaderboard()
+    {
+        return await _db.XpGuildUsers
+            .Include(u => u.User)
+                .ThenInclude(gu => gu.User)
+            .GroupBy(u => u.User.UserId)
+            .Where(g => g.First().User.User != null)
+            .Select(g => new LeaderboardEntry
+            {
+                User = g.First().User.User,
+                Exp = g.Sum(u => u.Exp)
+            })
+            .OrderByDescending(e => e.Exp)
+            .ToListAsync();
     }
 
     public async Task<XpGuildSettings> GetOrCreateSettingsAsync(Guild guild) =>
@@ -47,6 +55,6 @@ public class LeaderboardDbService
 
     public async Task<XpGuildUserRank> GetOrCreateUserRankAsync(GuildUser guildUser) =>
         await _db.XpGuildUsers.FirstOrDefaultAsync(u => u.User == guildUser)
-        ?? _db.XpGuildUsers.Add(new XpGuildUserRank { User = guildUser, Exp = 0 }).Entity;
+        ?? _db.XpGuildUsers.Add(new XpGuildUserRank { GuildUserId = guildUser.Id, User = guildUser, Exp = 0 }).Entity;
 
 }

@@ -8,16 +8,48 @@ public class XpGuildSettings
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long Id {get; set;}
+    public long GuildId { get; set; }
+
+    [ForeignKey("GuildId")]
+    public required Guild Guild {get; set;}
+    public bool Active {get; set;} = false;
+}
+
+public class XpUserSettings
+{
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public long Id {get; set;}
+    public long UserId { get; set; }
+
+    [ForeignKey("UserId")]
+    public required User User { get; set;}
+    public bool Active {get; set;} = false;
+}
+
+
+public class XpGuildUserSettings
+{
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public long Id {get; set;}
+    public long UserId { get; set; }
+    public long GuildId { get; set; }
+    [ForeignKey("GuildId")]
     public required Guild Guild { get; set;}
+    [ForeignKey("UserId")]
+    public required User User { get; set;}
     public bool Active {get; set;} = false;
 }
 
 public class XpGuildUserRank
 {
    
-    public long Id {get; set;}
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public long Id {get; set;}
+    public required long GuildUserId { get; set;}
+    [ForeignKey("GuildUserId")]
     public required GuildUser User {get; set;}
     public int Exp {get; set;}
     public DateTime LastExp {get; set;} = DateTime.UtcNow;
@@ -38,3 +70,4 @@ public class XpGuildUserRank
         }
     }
 }
+

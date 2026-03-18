@@ -17,7 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Database\Database.csproj" />
-    <ProjectReference Include="..\Botty\Botty.csproj" />
+    <ProjectReference Include="..\Ledger\Ledger.csproj" />
   </ItemGroup>
 
 

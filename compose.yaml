@@ -2,7 +2,7 @@ services:
   bot:
     build: 
       context: .
-      dockerfile: Botty/Dockerfile-dev
+      dockerfile: Ledger/Dockerfile-dev
     
     restart: always
     depends_on:
@@ -13,32 +13,32 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./Botty
+          path: ./Ledger
           target: /
           initial_sync: true
 
-  # dashboard:
-  #   build: 
-  #     context: .
-  #     dockerfile: Dashboard/Dockerfile.dev
-  #   restart: always
-  #   ports:
-  #       - "5248:5248"
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - ASPNETCORE_URLS=http://+:5248
-  #   develop:
-  #     watch:
-  #       - action: sync
-  #         path: ./Dashboard
-  #         target: /src/Dashboard
-  #       - action: sync
-  #         path: ./Database
-  #         target: /src/Database
+  dashboard:
+    build: 
+      context: .
+      dockerfile: Dashboard/Dockerfile.dev
+    restart: always
+    ports:
+        - "5248:5248"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_URLS=http://+:5248
+    develop:
+      watch:
+        - action: sync
+          path: ./Dashboard
+          target: /src/Dashboard
+        - action: sync
+          path: ./Database
+          target: /src/Database
   db:
     image: postgres
     restart: always

@@ -1,4 +1,4 @@
-using Botty;
+using Ledger;
 using Database;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +13,7 @@ using System.Reflection.Metadata;
 using Fluxify.Application.Entities.Messages;
 using Fluxify.Application.Entities.Channels;
 using System.Net.WebSockets;
-using Botty.Modules;
+using Ledger.Modules;
 using Fluxify.Commands;
 using Fluxify.Commands.CommandCollection;
 using Database.Services;
@@ -72,7 +72,8 @@ public class LadgerService(Bot bot, IConfiguration config, ILogger<LadgerService
 
 
         if (!guildSettings.Active) {await db.SaveChangesAsync(); return;}
-        var guildUser = await guildService.GetOrCreateGuildUserAsync(guild, userId);
+        var user = await guildService.GetOrCreateUserAsync(userId);
+        var guildUser = await guildService.GetOrCreateGuildUserAsync(guild, user);
         var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUser);
         await db.SaveChangesAsync();
         if (userXp.IsOnCooldown) {await db.SaveChangesAsync(); return;}

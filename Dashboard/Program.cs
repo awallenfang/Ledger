@@ -2,7 +2,7 @@ using Dashboard.Components;
 using Database;
 using Database.Services;
 using Microsoft.EntityFrameworkCore;
-using Botty.Services;
+using Ledger.Services;
 using Fluxify.Bot;
 using Fluxify.Core;
 using Fluxify.Gateway;
@@ -59,8 +59,9 @@ builder.Services.AddSingleton(new GatewayConfig()
 });
 builder.Services.AddSingleton(sp => new Bot("!", sp.GetRequiredService<FluxerConfig>(), sp.GetRequiredService<GatewayConfig>()));
 
-builder.Services.AddScoped<BottyAPIService>();
-
+builder.Services.AddScoped<LedgerAPIService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<FluxerApiService>();
 var app = builder.Build();
 
 

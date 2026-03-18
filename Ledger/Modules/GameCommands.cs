@@ -10,7 +10,7 @@ using Fluxify.Commands;
 using Fluxify.Application.Entities.Channels;
 using Fluxify.Commands.Exceptions;
 
-namespace Botty.Modules;
+namespace Ledger.Modules;
 
 public class GameCommands(CommandContext ctx, IHostEnvironment env, AppDbContext db, GuildDbService guildService, LeaderboardDbService leaderboardService)
 {
@@ -55,11 +55,9 @@ public class GameCommands(CommandContext ctx, IHostEnvironment env, AppDbContext
 
         if (guildSettings.Active)
         {
-            var guildUser = await db.GuildUsers.FirstOrDefaultAsync(user => user.Guild == guild && user.UserId == (long)userId)
-            ?? db.GuildUsers.Add(new Database.GuildUser{ Guild = guild, UserId = (long)userId }).Entity;
-
-            var userXp = await db.XpGuildUsers.FirstOrDefaultAsync(user => user.User == guildUser)
-            ?? db.XpGuildUsers.Add(new Database.XpGuildUserRank{ User = guildUser, Exp = 0 }).Entity;
+            var user = await guildService.GetOrCreateUserAsync((long)userId);
+            var guildUser = await guildService.GetOrCreateGuildUserAsync(guild, user);
+            var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUser);
 
             await ctx.ReplyAsync($"You have {userXp.Exp} experience. And are thus level {CalculateLevel(userXp.Exp)}");
         } else

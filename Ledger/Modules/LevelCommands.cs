@@ -10,7 +10,7 @@ using Fluxify.Commands;
 using Fluxify.Application.Entities.Channels;
 using Fluxify.Commands.Exceptions;
 
-namespace Botty.Modules;
+namespace Ledger.Modules;
 
 public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContext db, GuildDbService guildService, LeaderboardDbService leaderboardService)
 {
@@ -49,7 +49,6 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
 
         var guildId = (ulong)guildTextChannel.GuildId!;
         var userId = (ulong)ctx.Message.Author.Id;
-        
         // Fetch the corresponding database object and create it if it doesn't exist
         var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
 
@@ -58,11 +57,9 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
 
         if (guildSettings.Active)
         {
-            var guildUser = await db.GuildUsers.FirstOrDefaultAsync(user => user.Guild == guild && user.UserId == (long)userId)
-            ?? db.GuildUsers.Add(new Database.GuildUser{ Guild = guild, UserId = (long)userId }).Entity;
-
-            var userXp = await db.XpGuildUsers.FirstOrDefaultAsync(user => user.User == guildUser)
-            ?? db.XpGuildUsers.Add(new Database.XpGuildUserRank{ User = guildUser, Exp = 0 }).Entity;
+            var user = await guildService.GetOrCreateUserAsync((long)userId);
+            var guildUser = await guildService.GetOrCreateGuildUserAsync(guild, user);
+            var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUser);
 
             await ctx.ReplyAsync($"You have {userXp.Exp} experience. And are thus level {userXp.Level}");
         } else

@@ -14,12 +14,16 @@ public class GuildDbService
 
     public async Task<Guild> GetOrCreateGuildAsync(long guildId) =>
         await _db.Guilds.FindAsync(guildId)
-        ?? _db.Guilds.Add(new Guild { Id = guildId }).Entity;
+        ?? _db.Guilds.Add(new Guild { GuildId = guildId }).Entity;
 
 
-    public async Task<GuildUser> GetOrCreateGuildUserAsync(Guild guild, long userId) =>
-        await _db.GuildUsers.FirstOrDefaultAsync(u => u.Guild == guild && u.UserId == userId)
-        ?? _db.GuildUsers.Add(new GuildUser { Guild = guild, UserId = userId }).Entity;
+    public async Task<GuildUser> GetOrCreateGuildUserAsync(Guild guild, User user) =>
+        await _db.GuildUsers.FirstOrDefaultAsync(u => u.Guild == guild && u.User == user)
+        ?? _db.GuildUsers.Add(new GuildUser { Guild = guild, User = user }).Entity;
+
+    public async Task<User> GetOrCreateUserAsync(long userId) =>
+        await _db.Users.FirstOrDefaultAsync( u => u.UserId == userId)
+        ?? _db.Users.Add(new User { UserId = userId }).Entity;
 
 
 }

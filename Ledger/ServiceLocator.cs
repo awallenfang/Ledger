@@ -1,4 +1,4 @@
-namespace Botty;
+namespace Ledger;
 
 public static class ServiceLocator
 {

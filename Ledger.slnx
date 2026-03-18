@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="Botty/Botty.csproj" />
+  <Project Path="Ledger/Ledger.csproj" />
   <Project Path="Dashboard/Dashboard.csproj" />
   <Project Path="Database/Database.csproj" />
 </Solution>

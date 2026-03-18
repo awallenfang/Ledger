@@ -1,71 +1,127 @@
 @page "/leaderboard/{guild_id}"
-@using Botty.Services
+@using Ledger.Services
 @using Database
 @using Database.Services
 @using Microsoft.AspNetCore.Mvc.ModelBinding
 @inject LeaderboardDbService db
-@inject BottyAPIService api
+@inject LedgerAPIService api
 <h1>Leaderboard</h1>
+@inject FluxerApiService FluxerApi
+@inject AuthenticationStateProvider AuthStateProvider
+@using System.Security.Claims
+@inject FluxerApiService FluxerApi
+@inject AuthenticationStateProvider AuthStateProvider
+
+@using Dashboard.Models
+@if (guilds is null)
+{
+    <p>Loading guilds...</p>
+}
+else if (!guilds.Any())
+{
+    <p>No guilds found.</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        @foreach (var guild in guilds)
+        {
+            <div class="col">
+                <div class="card h-100">
+                    @if (guild.Icon is not null)
+                    {
+                        <img src="https://cdn.fluxer.app/icons/@guild.Id/@guild.Icon"
+                             class="card-img-top" alt="@guild.Name" />
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@guild.Name</h5>
+                        @if (guild.MemberCount.HasValue)
+                        {
+                            <p class="card-text text-muted">@guild.MemberCount members</p>
+                        }
+                        @if (guild.Owner)
+                        {
+                            <span class="badge bg-primary">Owner</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    
+}
 @if (users == null)
 {
     <p><em>There seems to be no users with experience on this server...</em></p>
 }
 else
 {
-<table class="table w-100 align-middle text-center">
-    <thead>
-        <tr>
-            <td>Name</td>
-            <td>Level</td>
-            <td>Exp</td>
-            <td></td>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var user in users)
-        {
-        <tr>
-            <td>@user.Name</td>
-            <td>@user.CurrentLevel</td>
-            <td>@user.Exp</td>
-            <td>
-                <div style="width: 10rem; background: #eee; border-radius: 4px; vertical-align: middle">
-                    <div style="width: @( (user.Exp % 100) / 2.0 )%; 
+    <table class="table w-100 align-middle text-center">
+        <thead>
+            <tr>
+                <td>Name</td>
+                <td>Level</td>
+                <td>Exp</td>
+                <td></td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.Name</td>
+                    <td>@user.CurrentLevel</td>
+                    <td>@user.Exp</td>
+                    <td>
+                        <div style="width: 10rem; background: #eee; border-radius: 4px; vertical-align: middle">
+                            <div style="width: @( (user.Exp % 100) / 2.0 )%; 
                                 background: #4caf50; 
                                 height: 10px; 
                                 border-radius: 4px;">
-                    </div>
-                </div>
-            </td>
-        </tr>
-        }
-    </tbody>
-</table>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }
+
 @code {
+    private List<Dashboard.Models.Guild>? guilds;
     private User[]? users;
     [Parameter] public string? guild_id { get; set; }
     protected override async Task OnInitializedAsync()
     {
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = state.User.FindFirstValue("fluxer:id");
+
+        if (userId is not null)
+            guilds = await FluxerApi.GetUserGuildsAsync(userId);
         var db_users = await db.GetGuildLeaderboard((long)Convert.ToInt64(guild_id)) ?? new List<XpGuildUserRank>();
         var actual_users = new List<User>();
-        foreach (var user in db_users) {
+        foreach (var user in db_users)
+        {
             actual_users.Add(
-                new User {
-                    Name = await api.GetUserName(user.User.UserId),
+                new User
+                {
+                    Name = await api.GetUserName(user.User.User),
                     Exp = user.Exp,
                     CurrentLevel = user.Level,
                 }
             );
         }
         users = actual_users.ToArray();
-       
+
     }
 
     private class User
     {
         public string Name { get; set; }
-        public int Exp {get; set; }
-        public int CurrentLevel {get; set; }
+        public int Exp { get; set; }
+        public int CurrentLevel { get; set; }
     }
 }

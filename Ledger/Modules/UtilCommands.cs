@@ -2,7 +2,7 @@
 using Fluxify.Commands;
 using Serilog;
 
-namespace Botty.Modules;
+namespace Ledger.Modules;
 
 public class UtilCommands(CommandContext ctx)
 {
