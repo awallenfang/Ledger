@@ -35,18 +35,21 @@ public class LeaderboardDbService
 
     public async Task<List<LeaderboardEntry>> GetGlobalLeaderboard()
     {
-        return await _db.XpGuildUsers
+        var ranks = await _db.XpGuildUsers
             .Include(u => u.User)
                 .ThenInclude(gu => gu.User)
+            .Where(u => u.User.User != null)
+            .ToListAsync();
+
+        return ranks
             .GroupBy(u => u.User.UserId)
-            .Where(g => g.First().User.User != null)
             .Select(g => new LeaderboardEntry
             {
                 User = g.First().User.User,
                 Exp = g.Sum(u => u.Exp)
             })
             .OrderByDescending(e => e.Exp)
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<XpGuildSettings> GetOrCreateSettingsAsync(Guild guild) =>

@@ -1,0 +1,85 @@
+@page "/globalLeaderboard"
+@using Ledger.Services
+@using Database
+@using Database.Services
+@using Microsoft.AspNetCore.Mvc.ModelBinding
+@inject LeaderboardDbService db
+@inject LedgerAPIService api
+<h1>Leaderboard</h1>
+@inject FluxerApiService FluxerApi
+@inject AuthenticationStateProvider AuthStateProvider
+@using System.Security.Claims
+@inject FluxerApiService FluxerApi
+@inject AuthenticationStateProvider AuthStateProvider
+
+@using Dashboard.Models
+
+@code {
+    
+}
+@if (users == null)
+{
+    <p><em>There seems to be no users with experience on this server...</em></p>
+}
+else
+{
+    <table class="table w-100 align-middle text-center">
+        <thead>
+            <tr>
+                <td>Name</td>
+                <td>Level</td>
+                <td>Exp</td>
+                <td></td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.Name</td>
+                    <td>@user.CurrentLevel</td>
+                    <td>@user.Exp</td>
+                    <td>
+                        <div style="width: 10rem; background: #eee; border-radius: 4px; vertical-align: middle">
+                            <div style="width: @( (user.Exp % 100) / 2.0 )%; 
+                                background: #4caf50; 
+                                height: 10px; 
+                                border-radius: 4px;">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private User[]? users;
+    protected override async Task OnInitializedAsync()
+    {
+       
+        var db_users = await db.GetGlobalLeaderboard() ?? new List<LeaderboardEntry>();
+        var actual_users = new List<User>();
+        foreach (var user in db_users)
+        {
+            actual_users.Add(
+                new User
+                {
+                    Name = await api.GetUserName(user.User),
+                    Exp = user.Exp,
+                    CurrentLevel = user.Level,
+                }
+            );
+        }
+        users = actual_users.ToArray();
+
+    }
+
+    private class User
+    {
+        public string Name { get; set; }
+        public int Exp { get; set; }
+        public int CurrentLevel { get; set; }
+    }
+}
