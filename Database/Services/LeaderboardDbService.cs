@@ -1,7 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Fluxify.Application.Entities;
 
 namespace Database.Services;
+
+public class LeaderboardEntry {
+    public User User {get; set;}
+    public int Exp {get; set;}
+    public int Level => (int)(Exp / 100.0) + 1;
+}
 
 public class LeaderboardDbService
 {
@@ -27,6 +34,11 @@ public class LeaderboardDbService
             ?? _db.GuildUsers.Add(new Database.GuildUser{ Guild = guild }).Entity;
 
         return await _db.XpGuildUsers.Where(user => user.User.Guild.Id == guildId).Include(u => u.User).OrderByDescending(u => u.Exp).ToListAsync();
+    }
+
+    public async Task<List<LeaderboardEntry>> GetGlobalLeaderboard() {
+        // get all users
+        var userXp = await _db.XpGuildUsers.AllAsync();
     }
 
     public async Task<XpGuildSettings> GetOrCreateSettingsAsync(Guild guild) =>

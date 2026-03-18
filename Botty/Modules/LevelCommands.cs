@@ -14,8 +14,6 @@ namespace Botty.Modules;
 
 public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContext db, GuildDbService guildService, LeaderboardDbService leaderboardService)
 {
-    private static int CalculateLevel(int exp) => (int)(exp / 200.0);
-
     public async Task LeaderboardCommand()
     {
         // Check if this even is a guild
@@ -25,6 +23,7 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
         }
 
         var guildId = (ulong)guildTextChannel.GuildId!;
+
         if (env.IsDevelopment())
         {
             await ctx.ReplyAsync($"This server's leaderboard is available at http://127.0.0.1:5248/leaderboard/{guildId}");
@@ -33,6 +32,10 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
         {
             await ctx.ReplyAsync($"This server's leaderboard is available at https://botty.ritzin.dev/leaderboard/{guildId}");
         }
+    }
+
+    public async Task GlobalLeaderboardCommand() {
+
     }
 
     public async Task RankCommand()

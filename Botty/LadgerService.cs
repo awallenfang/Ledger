@@ -17,11 +17,11 @@ using Botty.Modules;
 using Fluxify.Commands;
 using Fluxify.Commands.CommandCollection;
 using Database.Services;
-public class BottyService(Bot bot, IConfiguration config, ILogger<BottyService> logger) : BackgroundService
+public class LadgerService(Bot bot, IConfiguration config, ILogger<LadgerService> logger) : BackgroundService
 {
 
     private readonly IConfiguration _config = config;
-    private readonly ILogger<BottyService> _logger = logger;
+    private readonly ILogger<LadgerService> _logger = logger;
 
     public override void Dispose()
     {

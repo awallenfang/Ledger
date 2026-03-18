@@ -7,8 +7,6 @@ RUN dotnet restore Botty/Botty.csproj
 COPY Dashboard/ Dashboard/
 COPY Database/ Database/
 COPY Botty/ Botty/
-COPY Fluxify/ Fluxify/
-
 
 WORKDIR "/src/Botty"
 # RUN dotnet publish -c Release -o /app/out

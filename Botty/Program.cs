@@ -29,7 +29,7 @@ var host = Host.CreateDefaultBuilder(args)
                 "Connection string 'Default' is missing from configuration.");
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));
-        services.AddHostedService<BottyService>();
+        services.AddHostedService<LadgerService>();
         services.AddScoped<GuildDbService>();
         services.AddScoped<LeaderboardDbService>();
 
@@ -47,7 +47,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddSingleton(new GatewayConfig()
         {
             IgnoredGatewayEvents = ["PRESENCE_UPDATE"],
-            DefaultPresence = new(UserStatus.Online, CustomStatus: new CustomStatus(Text: "Botty is listening!"))
+            DefaultPresence = new(UserStatus.Online, CustomStatus: new CustomStatus(Text: "Ladger is listening!"))
         });
         services.AddSingleton(sp => new Bot("!", sp.GetRequiredService<FluxerConfig>(), sp.GetRequiredService<GatewayConfig>()));
     })
