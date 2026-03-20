@@ -33,19 +33,23 @@ var host = Host.CreateDefaultBuilder(args)
 
         services.AddTransient<UtilCommands>();
         services.AddTransient<LevelCommands>();
-
         services.AddScoped<ContextProvider>()
             .AddScoped(sp => sp.GetRequiredService<ContextProvider>().Context.Value!);
-        services.AddFluxifyCore(sp => new FluxerConfig()
+        var token = context.Configuration["token"]
+            ?? throw new InvalidOperationException("TOKEN is missing from configuration.");
+        var fluxerConfig = new FluxerConfig()
         {
-            Credentials = new BotTokenCredentials(sp.GetRequiredService<IConfiguration>()["token"] ?? throw new InvalidOperationException("TOKEN is missing from configuration."))
-        });
-        services.AddSingleton(new GatewayConfig()
+            Credentials = new BotTokenCredentials(token)
+        };
+        services.AddFluxifyCore(_ => fluxerConfig); // if it accepts an instance overload
+
+        var gatewayConfig = new GatewayConfig()
         {
             IgnoredGatewayEvents = ["PRESENCE_UPDATE"],
             DefaultPresence = new(UserStatus.Online, CustomStatus: new CustomStatus(Text: "Ledger is listening!"))
-        });
-        services.AddSingleton(sp => new Bot("!", sp.GetRequiredService<FluxerConfig>(), sp.GetRequiredService<GatewayConfig>()));
+        };
+        services.AddSingleton(gatewayConfig);
+        services.AddSingleton(sp => new Bot("!", fluxerConfig, gatewayConfig));
     })
     .Build();
 

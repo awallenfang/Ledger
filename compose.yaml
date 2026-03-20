@@ -1,21 +1,21 @@
 services:
-  bot:
-    build: 
-      context: .
-      dockerfile: Ledger/Dockerfile-dev
+  # bot:
+  #   build: 
+  #     context: .
+  #     dockerfile: Ledger/Dockerfile-dev
     
-    restart: always
-    depends_on:
-      db:
-        condition: service_healthy
-    env_file:
-      - .env
-    develop:
-      watch:
-        - action: sync
-          path: ./Ledger
-          target: /
-          initial_sync: true
+  #   restart: always
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   env_file:
+  #     - .env
+  #   develop:
+  #     watch:
+  #       - action: sync
+  #         path: ./Ledger
+  #         target: /
+  #         initial_sync: true
 
   dashboard:
     build: 
