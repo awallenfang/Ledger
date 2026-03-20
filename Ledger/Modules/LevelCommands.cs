@@ -9,10 +9,13 @@ using Microsoft.Extensions.Hosting;
 using Fluxify.Commands;
 using Fluxify.Application.Entities.Channels;
 using Fluxify.Commands.Exceptions;
+using Fluxify.Bot;
+using System.Collections.Frozen;
+using Fluxify.Core.Types;
 
 namespace Ledger.Modules;
 
-public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContext db, GuildDbService guildService, LeaderboardDbService leaderboardService)
+public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContext db, GuildDbService guildService, LeaderboardDbService leaderboardService, Bot bot)
 {
     public async Task LeaderboardCommand()
     {
@@ -69,25 +72,44 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
         await db.SaveChangesAsync();
     }
 
-    public async Task XpCommand(AppDbContext db)
+    public async Task XpCommand()
     {
-        var message = ctx.Message.Content.Split(" ", 2)[1];
+        var parts = ctx.Message.Content.Split(" ", 2);
+        if (parts.Length < 2)
+        {
+            await ctx.ReplyAsync("Usage: !xp <on|off|init>");
+            return;
+        }
+        var normalizedMessage = parts[1].ToLower().Trim();
 
-        // Check if this even is a guild
         if (ctx.Message.Channel is not GuildTextChannel guildTextChannel)
         {
-            throw new CommandException("This seems to not be a guild, so leveling is disabled.");    
+            throw new CommandException("This seems to not be a guild, so leveling is disabled.");
         }
 
         var guildId = (ulong)guildTextChannel.GuildId!;
-
+        Console.WriteLine(guildId);
+        var guild_member = await bot.Rest.Guilds[guildId].Members[ctx.Message.Author.Id].GetAsync();
+        Console.WriteLine(guild_member);
+        var guild_roles = await bot.Rest.Guilds[guildId].Roles.ListAsync();
+        Console.WriteLine(guild_roles);
+        var roleMap = guild_roles.ToDictionary(r => r.Id);
+        Console.WriteLine(roleMap);
+        var admin = guild_member.Roles
+            .Any(roleId => roleMap.TryGetValue(roleId, out var role) 
+                && role.Permissions.HasFlag(Permissions.ManageGuild));
+        Console.WriteLine(admin);
+        if (!admin)
+        {
+            await ctx.ReplyAsync("You need the Manage Server permission to use this command.");
+            return;
+        }
         // Fetch the corresponding database object and create it if it doesn't exist
         var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
 
         // Fetch the corresponding settings and create it if it doesn't exist
         var guildSettings = await leaderboardService.GetOrCreateSettingsAsync(guild);
 
-        var normalizedMessage = message.ToLower().Trim();
         switch (normalizedMessage)
         {
             case "init":

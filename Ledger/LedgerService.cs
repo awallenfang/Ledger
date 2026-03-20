@@ -3,30 +3,22 @@ using Database;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Serilog;
-using Serilog.Core;
-using System.Reflection;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Fluxify.Bot;
-using System.Reflection.Metadata;
 using Fluxify.Application.Entities.Messages;
 using Fluxify.Application.Entities.Channels;
-using System.Net.WebSockets;
 using Ledger.Modules;
 using Fluxify.Commands;
 using Fluxify.Commands.CommandCollection;
 using Database.Services;
-public class LadgerService(Bot bot, IConfiguration config, ILogger<LadgerService> logger) : BackgroundService
+using Fluxify.Commands.Model;
+public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService> logger) : BackgroundService
 {
 
     private readonly IConfiguration _config = config;
-    private readonly ILogger<LadgerService> _logger = logger;
+    private readonly ILogger<LedgerService> _logger = logger;
 
-    public override void Dispose()
-    {
-        base.Dispose();
-    }
+    private readonly Bot _bot = bot;
 
     private TModule ProvideModule<TModule>(CommandContext commandContext) where TModule : notnull
     {
@@ -38,19 +30,16 @@ public class LadgerService(Bot bot, IConfiguration config, ILogger<LadgerService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        bot.MessageReceived += HandleExpAsync;
+        _bot.MessageReceived += HandleExpAsync;
 
-        bot.Commands
-            .Module("utils", m =>
-            {
-               m.Command("ping", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).PingCommand());
-               m.Command("pong", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).PongCommand());
-            })
+
+        _bot.Commands
+            .Command("ping", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).PingCommand())
             .Command("leaderboard", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).LeaderboardCommand())
             .Command("rank", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).RankCommand())
-            .Command("xp", (CommandContext ctx, AppDbContext db ) => ProvideModule<LevelCommands>(ctx).XpCommand(db));
+            .Command("xp", (CommandContext ctx, AppDbContext db ) => ProvideModule<LevelCommands>(ctx).XpCommand());
 
-        await bot.RunAsync(stoppingToken);
+        await _bot.RunAsync(stoppingToken);
     }
 
     private async Task HandleExpAsync(Message data)
@@ -76,7 +65,7 @@ public class LadgerService(Bot bot, IConfiguration config, ILogger<LadgerService
         var guildUser = await guildService.GetOrCreateGuildUserAsync(guild, user);
         var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUser);
         await db.SaveChangesAsync();
-        if (userXp.IsOnCooldown) {await db.SaveChangesAsync(); return;}
+        if (userXp.IsOnCooldown) return;
         userXp.AddExp();
             
         await db.SaveChangesAsync();

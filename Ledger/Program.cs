@@ -14,14 +14,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Serilog;
-using Serilog.Core;
-using Serilog.Sinks.SystemConsole.Themes;
-using System.Reflection;
+using Fluxify.Core.Credentials;
 
 
 var host = Host.CreateDefaultBuilder(args)
-    .ConfigureLogging(l => l.AddConsole())
+    .ConfigureLogging(l => {l.AddConsole();
+    })
     .ConfigureServices((context, services) =>
     {
         var connectionString = context.Configuration.GetConnectionString("Default")
@@ -29,7 +27,7 @@ var host = Host.CreateDefaultBuilder(args)
                 "Connection string 'Default' is missing from configuration.");
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));
-        services.AddHostedService<LadgerService>();
+        services.AddHostedService<LedgerService>();
         services.AddScoped<GuildDbService>();
         services.AddScoped<LeaderboardDbService>();
 
@@ -38,16 +36,14 @@ var host = Host.CreateDefaultBuilder(args)
 
         services.AddScoped<ContextProvider>()
             .AddScoped(sp => sp.GetRequiredService<ContextProvider>().Context.Value!);
-        services.AddSingleton(sp => new FluxerConfig()
+        services.AddFluxifyCore(sp => new FluxerConfig()
         {
-            ServiceProvider = sp,
             Credentials = new BotTokenCredentials(sp.GetRequiredService<IConfiguration>()["token"] ?? throw new InvalidOperationException("TOKEN is missing from configuration."))
         });
-        services.AddSingleton<HttpClient>(sp => sp.GetRequiredService<FluxerConfig>() is { HttpClientFactory: {} factory } cfg ? factory(cfg) : throw new InvalidOperationException());
         services.AddSingleton(new GatewayConfig()
         {
             IgnoredGatewayEvents = ["PRESENCE_UPDATE"],
-            DefaultPresence = new(UserStatus.Online, CustomStatus: new CustomStatus(Text: "Ladger is listening!"))
+            DefaultPresence = new(UserStatus.Online, CustomStatus: new CustomStatus(Text: "Ledger is listening!"))
         });
         services.AddSingleton(sp => new Bot("!", sp.GetRequiredService<FluxerConfig>(), sp.GetRequiredService<GatewayConfig>()));
     })
