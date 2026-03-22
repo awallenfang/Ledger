@@ -25,7 +25,7 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
             throw new CommandException("This seems to not be a guild, so leveling is disabled.");    
         }
 
-        var guildId = (ulong)guildTextChannel.GuildId!;
+        var guildId = (ulong)guildTextChannel.Guild.Id!;
 
         if (env.IsDevelopment())
         {
@@ -43,14 +43,14 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
 
     public async Task RankCommand()
     {
-
+        Console.WriteLine("Running rank");
         // Check if this even is a guild
         if (ctx.Message.Channel is not GuildTextChannel guildTextChannel)
         {
             throw new CommandException("Command must be executed from a guild!");    
         }
 
-        var guildId = (ulong)guildTextChannel.GuildId!;
+        var guildId = (ulong)guildTextChannel.Guild.Id!;
         var userId = (ulong)ctx.Message.Author.Id;
         // Fetch the corresponding database object and create it if it doesn't exist
         var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
@@ -74,6 +74,7 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
 
     public async Task XpCommand()
     {
+        Console.WriteLine("AAAAAAAAAAAAAA");
         var parts = ctx.Message.Content.Split(" ", 2);
         if (parts.Length < 2)
         {
@@ -81,34 +82,21 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
             return;
         }
         var normalizedMessage = parts[1].ToLower().Trim();
+        Console.WriteLine("BBBBBBBBBBBBBB");
 
         if (ctx.Message.Channel is not GuildTextChannel guildTextChannel)
         {
             throw new CommandException("This seems to not be a guild, so leveling is disabled.");
         }
 
-        var guildId = (ulong)guildTextChannel.GuildId!;
-        Console.WriteLine(guildId);
-        var guild_member = await bot.Rest.Guilds[guildId].Members[ctx.Message.Author.Id].GetAsync();
-        Console.WriteLine(guild_member);
-        var guild_roles = await bot.Rest.Guilds[guildId].Roles.ListAsync();
-        Console.WriteLine(guild_roles);
-        var roleMap = guild_roles.ToDictionary(r => r.Id);
-        Console.WriteLine(roleMap);
-        var admin = guild_member.Roles
-            .Any(roleId => roleMap.TryGetValue(roleId, out var role) 
-                && role.Permissions.HasFlag(Permissions.ManageGuild));
-        Console.WriteLine(admin);
-        if (!admin)
-        {
-            await ctx.ReplyAsync("You need the Manage Server permission to use this command.");
-            return;
-        }
+        var guildId = (ulong)guildTextChannel.Guild.Id!;
         // Fetch the corresponding database object and create it if it doesn't exist
         var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
+        Console.WriteLine("CCCCCCCCCCCCCCCC");
 
         // Fetch the corresponding settings and create it if it doesn't exist
         var guildSettings = await leaderboardService.GetOrCreateSettingsAsync(guild);
+        Console.WriteLine("DDDDDDDDDDDDDDDDDDD");
 
         switch (normalizedMessage)
         {

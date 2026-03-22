@@ -9,6 +9,7 @@ using Fluxify.Gateway;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Fluxify.Core.Credentials;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -49,10 +50,28 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddScoped<LeaderboardDbService>();
-builder.Services.AddFluxifyCore(sp => new FluxerConfig()
+var token = builder.Configuration["token"]
+            ?? throw new InvalidOperationException("TOKEN is missing from configuration.");
+builder.Services.TryAddSingleton<FluxerConfig>(sp =>
 {
-    Credentials = new BotTokenCredentials(sp.GetRequiredService<IConfiguration>()["token"] ?? throw new InvalidOperationException("TOKEN is missing from configuration."))
+
+    return new FluxerConfig()
+    {
+        Credentials = new BotTokenCredentials(token),
+        LoggerFactory = sp.GetRequiredService<ILoggerFactory>(),
+        ServiceProvider = sp
+    };
 });
+
+builder.Services.TryAddTransient<AuthenticationHeaderHandler>();
+builder.Services.TryAddTransient(sp =>
+{
+    var config = sp.GetRequiredService<FluxerConfig>();
+
+    return config.HttpClientFactory.Invoke(config);
+});
+
+
 builder.Services.AddSingleton(new GatewayConfig()
 {
 });

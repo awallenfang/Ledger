@@ -1,6 +1,6 @@
 ﻿<nav class="navbar navbar-expand-lg">
   <div class="container-fluid">
-    <a class="navbar-brand" href="#">Ledger</a>
+    <a class="navbar-brand" href="#"><img src="ledger.png" width=100 height=100 class="rounded-circle"></a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -9,7 +9,7 @@
         @* <li class="nav-item">
           <a class="nav-link active" aria-current="page" href="#">Home</a>
         </li> *@
-        <NavLink class="nav-link" href="profile">
+        @* <NavLink class="nav-link" href="profile">
             <span>Profile</span>
         </NavLink>
         <NavLink class="nav-link" href="leaderboard">
@@ -17,16 +17,16 @@
         </NavLink>
         <NavLink class="nav-link" href="globalLeaderboard">
              <span>Global Leaderboard</span>
-        </NavLink>
+        </NavLink> *@
       </ul>
       <div>
         <AuthorizeView>
         <Authorized Context="auth">
             <p>Welcome, @auth.User.FindFirstValue("fluxer:global_name")!</p>
-            <a href="/logout" class="btn btn-secondary">Logout</a>
+            <a href="/logout" class="btn btn-primary text-dark">Logout</a>
         </Authorized>
         <NotAuthorized>
-            <a href="/login" class="btn btn-primary">Login with Fluxer</a>
+            <a href="/login" class="btn btn-primary text-dark">Login with Fluxer</a>
         </NotAuthorized>
     </AuthorizeView>
       </div>

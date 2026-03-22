@@ -13,42 +13,6 @@
 @inject AuthenticationStateProvider AuthStateProvider
 
 @using Dashboard.Models
-@if (guilds is null)
-{
-    <p>Loading guilds...</p>
-}
-else if (!guilds.Any())
-{
-    <p>No guilds found.</p>
-}
-else
-{
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        @foreach (var guild in guilds)
-        {
-            <div class="col">
-                <div class="card h-100">
-                    @if (guild.Icon is not null)
-                    {
-                        <img src="https://cdn.fluxer.app/icons/@guild.Id/@guild.Icon"
-                             class="card-img-top" alt="@guild.Name" />
-                    }
-                    <div class="card-body">
-                        <h5 class="card-title">@guild.Name</h5>
-                        @if (guild.MemberCount.HasValue)
-                        {
-                            <p class="card-text text-muted">@guild.MemberCount members</p>
-                        }
-                        @if (guild.Owner)
-                        {
-                            <span class="badge bg-primary">Owner</span>
-                        }
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-}
 
 @code {
     
@@ -91,16 +55,11 @@ else
 }
 
 @code {
-    private List<Dashboard.Models.Guild>? guilds;
     private User[]? users;
     [Parameter] public string? guild_id { get; set; }
     protected override async Task OnInitializedAsync()
     {
-        var state = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userId = state.User.FindFirstValue("fluxer:id");
 
-        if (userId is not null)
-            guilds = await FluxerApi.GetUserGuildsAsync(userId);
         var db_users = await db.GetGuildLeaderboard((long)Convert.ToInt64(guild_id)) ?? new List<XpGuildUserRank>();
         var actual_users = new List<User>();
         foreach (var user in db_users)

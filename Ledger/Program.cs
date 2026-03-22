@@ -15,10 +15,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Fluxify.Core.Credentials;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 
 var host = Host.CreateDefaultBuilder(args)
-    .ConfigureLogging(l => {l.AddConsole();
+    .ConfigureLogging(l =>
+    {
+        l.AddConsole();
     })
     .ConfigureServices((context, services) =>
     {
@@ -27,21 +30,34 @@ var host = Host.CreateDefaultBuilder(args)
                 "Connection string 'Default' is missing from configuration.");
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));
-        services.AddHostedService<LedgerService>();
         services.AddScoped<GuildDbService>();
         services.AddScoped<LeaderboardDbService>();
 
-        services.AddTransient<UtilCommands>();
-        services.AddTransient<LevelCommands>();
-        services.AddScoped<ContextProvider>()
+        services.AddSingleton<ContextProvider>()
             .AddScoped(sp => sp.GetRequiredService<ContextProvider>().Context.Value!);
+        services.AddScoped<UtilCommands>();
+        services.AddScoped<LevelCommands>();
         var token = context.Configuration["token"]
             ?? throw new InvalidOperationException("TOKEN is missing from configuration.");
-        var fluxerConfig = new FluxerConfig()
+        services.TryAddSingleton<FluxerConfig>(sp =>
         {
-            Credentials = new BotTokenCredentials(token)
-        };
-        services.AddFluxifyCore(_ => fluxerConfig); // if it accepts an instance overload
+
+            return new FluxerConfig()
+            {
+                Credentials = new BotTokenCredentials(token),
+                LoggerFactory = sp.GetRequiredService<ILoggerFactory>(),
+                ServiceProvider = sp
+            };
+        });
+
+        services.TryAddTransient<AuthenticationHeaderHandler>();
+        services.TryAddTransient(sp =>
+        {
+            var config = sp.GetRequiredService<FluxerConfig>();
+
+            return config.HttpClientFactory.Invoke(config);
+        });
+
 
         var gatewayConfig = new GatewayConfig()
         {
@@ -49,7 +65,8 @@ var host = Host.CreateDefaultBuilder(args)
             DefaultPresence = new(UserStatus.Online, CustomStatus: new CustomStatus(Text: "Ledger is listening!"))
         };
         services.AddSingleton(gatewayConfig);
-        services.AddSingleton(sp => new Bot("!", fluxerConfig, gatewayConfig));
+        services.AddSingleton(sp => new Bot("!", sp.GetRequiredService<FluxerConfig>(), gatewayConfig));
+        services.AddHostedService<LedgerService>();
     })
     .Build();
 
@@ -75,7 +92,7 @@ ServiceLocator.Initialize(host.Services);
 
 await host.RunAsync();
 
-class ContextProvider
+public class ContextProvider
 {
     public AsyncLocal<CommandContext> Context { get; } = new();
 }
