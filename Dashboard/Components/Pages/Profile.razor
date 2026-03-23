@@ -3,7 +3,8 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
-
+@inject LeaderboardDbService db
+@inject GuildDbService guild_db
 <h3>You are logged in!</h3>
 
 <p>Username: @User.FindFirstValue(ClaimTypes.Name)</p>
@@ -25,5 +26,73 @@
             var state = await AuthenticationStateTask;
             User = state.User;
         }
+        if (long.TryParse(User.FindFirstValue("fluxer:id"), out var userId))
+        {
+            var user = await guild_db.GetOrCreateUserAsync(userId);
+            var settings = await db.GetOrCreateUserSettingsAsync(user);
+            if (settings is not null)
+            {
+                model.Global = settings.Global;
+            }
+        }
+    }
+
+    private FormModel model = new();
+    private bool isLoading = false;
+    private bool success = false;
+    private string? errorMessage;
+
+    private async Task HandleSubmit()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            if (!long.TryParse(User.FindFirstValue("fluxer:id"), out var userId))
+            {
+                errorMessage = "Could not resolve user ID.";
+                return;
+            }
+
+            await db.UpdateUserSettings(userId, model.Global);
+            success = true;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public class FormModel
+    {
+        [SupplyParameterFromForm]
+        public bool Global { get; set; }
     }
 }
+
+
+
+<EditForm Model="@model" OnValidSubmit="HandleSubmit" FormName="UserSettings">
+    <DataAnnotationsValidator />
+
+    <div>
+        <label>Show rank on global leaderboards</label>
+        <InputCheckbox @bind-Value="model.Global" />
+        <ValidationMessage For="@(() => model.Global)" />
+    </div>
+
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <p style="color:red">@errorMessage</p>
+    }
+
+    <button type="submit" disabled="@isLoading">
+        @(isLoading ? "Submitting..." : "Submit")
+    </button>
+</EditForm>

@@ -54,6 +54,40 @@ public class LeaderboardDbService
             .ToList();
     }
 
+    public async Task<XpUserSettings> UpdateUserSettings(long userId, bool global)
+    {
+        Console.WriteLine($"UpdateUserSettings called: userId={userId}, global={global}");
+
+        var settings = await _db.XpUserSettings
+            .FirstOrDefaultAsync(s => s.UserId == userId);
+
+        Console.WriteLine($"Existing settings: {(settings is null ? "null" : $"id={settings.Id}, global={settings.Global}")}");
+
+        if (settings is null)
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user is null) throw new InvalidOperationException($"User {userId} not found.");
+
+            settings = new XpUserSettings
+            {
+                User = user,
+                UserId = userId,
+                Global = global
+            };
+            _db.XpUserSettings.Add(settings);
+            Console.WriteLine("Created new settings entry");
+        }
+        else
+        {
+            settings.Global = global;
+            Console.WriteLine($"Updated existing entry, new global={settings.Global}");
+        }
+
+        var rows = await _db.SaveChangesAsync();
+        Console.WriteLine($"Rows affected: {rows}");
+
+        return settings;
+    }
     public async Task<XpGuildSettings> GetOrCreateSettingsAsync(Guild guild) =>
         await _db.XpGuildSettings.FirstOrDefaultAsync(s => s.Guild == guild)
         ?? _db.XpGuildSettings.Add(new XpGuildSettings { Guild = guild, Active = false }).Entity;

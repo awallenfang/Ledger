@@ -50,6 +50,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddScoped<LeaderboardDbService>();
+builder.Services.AddScoped<GuildDbService>();
 var token = builder.Configuration["token"]
             ?? throw new InvalidOperationException("TOKEN is missing from configuration.");
 builder.Services.TryAddSingleton<FluxerConfig>(sp =>
