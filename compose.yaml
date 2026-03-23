@@ -16,7 +16,8 @@ services:
           path: ./Ledger
           target: /
           initial_sync: true
-
+    networks:
+      - ledger
   dashboard:
     build: 
       context: .
@@ -39,6 +40,9 @@ services:
         - action: sync
           path: ./Database
           target: /src/Database
+    networks:
+      - local
+      - ledger
   db:
     image: postgres
     restart: always
@@ -48,12 +52,19 @@ services:
     env_file:
         - .env
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U botty -d botty"]
+      test: ["CMD-SHELL", "pg_isready -U ledger -d ledger"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - ledger
   # adminer:
   #   image: adminer
   #   restart: always
   #   ports:
   #     - "7070:8080"
+networks:
+  local:
+    external: true
+  ledger:
+    external: false
