@@ -1,4 +1,7 @@
 [data-bs-theme="light"] {
+    * {
+        --bs-body-bg-alt: #{$body-bg-alt}
+    }
     .btn-primary {
         --bs-btn-bg: #{$primary};
         --bs-btn-border-color: #{$primary};
@@ -63,6 +66,9 @@
 }
 
 [data-bs-theme="dark"] {
+    * {
+        --bs-body-bg-alt: #{$body-bg-alt}
+    }
     .btn-primary {
         --bs-btn-bg: #{$primary};
         --bs-btn-border-color: #{$primary};

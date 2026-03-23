@@ -33,7 +33,7 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
         }
         else
         {
-            await ctx.ReplyAsync($"This server's leaderboard is available at https://botty.ritzin.dev/leaderboard/{guildId}");
+            await ctx.ReplyAsync($"This server's leaderboard is available at https://ledger.ritzin.dev/leaderboard/{guildId}");
         }
     }
 

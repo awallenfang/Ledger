@@ -1,4 +1,5 @@
 @page "/leaderboard/{guild_id}"
+@attribute [ExcludeFromInteractiveRouting]
 @using Ledger.Services
 @using Database
 @using Database.Services
@@ -26,6 +27,7 @@ else
     <table class="table w-100 align-middle text-center">
         <thead>
             <tr>
+                <td>Position</td>
                 <td>Name</td>
                 <td>Level</td>
                 <td>Exp</td>
@@ -36,13 +38,14 @@ else
             @foreach (var user in users)
             {
                 <tr>
+                    <td>#@user.Position</td>
                     <td>@user.Name</td>
                     <td>@user.CurrentLevel</td>
                     <td>@user.Exp</td>
                     <td>
-                        <div style="width: 10rem; background: #eee; border-radius: 4px; vertical-align: middle">
+                        <div style="width: 10rem; background: var(--bs-body-bg-alt); border-radius: 4px; vertical-align: middle">
                             <div style="width: @( (user.Exp % 100) / 2.0 )%; 
-                                background: #4caf50; 
+                                background: var(--bs-primary); 
                                 height: 10px; 
                                 border-radius: 4px;">
                             </div>
@@ -62,6 +65,7 @@ else
 
         var db_users = await db.GetGuildLeaderboard((long)Convert.ToInt64(guild_id)) ?? new List<XpGuildUserRank>();
         var actual_users = new List<User>();
+        var idx = 1;
         foreach (var user in db_users)
         {
             actual_users.Add(
@@ -70,8 +74,10 @@ else
                     Name = await api.GetUserName(user.User.User),
                     Exp = user.Exp,
                     CurrentLevel = user.Level,
+                    Position = idx,
                 }
             );
+            idx += 1;
         }
         users = actual_users.ToArray();
 
@@ -82,5 +88,6 @@ else
         public string Name { get; set; }
         public int Exp { get; set; }
         public int CurrentLevel { get; set; }
+        public int Position {get; set; }
     }
 }
