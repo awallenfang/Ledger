@@ -1,4 +1,4 @@
-@* @page "/globalLeaderboard" *@
+@page "/global"
 @using Ledger.Services
 @using Database
 @using Database.Services
@@ -26,6 +26,7 @@ else
     <table class="table w-100 align-middle text-center">
         <thead>
             <tr>
+                <td>Position</td>
                 <td>Name</td>
                 <td>Level</td>
                 <td>Exp</td>
@@ -61,6 +62,7 @@ else
        
         var db_users = await db.GetGlobalLeaderboard() ?? new List<LeaderboardEntry>();
         var actual_users = new List<User>();
+        var idx = 1;
         foreach (var user in db_users)
         {
             actual_users.Add(
@@ -69,8 +71,10 @@ else
                     Name = await api.GetUserName(user.User),
                     Exp = user.Exp,
                     CurrentLevel = user.Level,
+                    Position = idx
                 }
             );
+            idx += 1;
         }
         users = actual_users.ToArray();
 
@@ -81,5 +85,6 @@ else
         public string Name { get; set; }
         public int Exp { get; set; }
         public int CurrentLevel { get; set; }
+        public int Position {get; set;}
     }
 }

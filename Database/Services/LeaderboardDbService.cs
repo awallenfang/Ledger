@@ -26,7 +26,7 @@ public class LeaderboardDbService
         var guild_settings = await GetOrCreateSettingsAsync(guild);
 
         return await _db.XpGuildUsers
-        .Include(u => u.User)              
+        .Include(u => u.User)
             .ThenInclude(gu => gu.User)
         .Where(u => u.User.GuildId == guildId)
         .OrderByDescending(u => u.Exp)
@@ -37,8 +37,10 @@ public class LeaderboardDbService
     {
         var ranks = await _db.XpGuildUsers
             .Include(u => u.User)
-                .ThenInclude(gu => gu.User)
+            .ThenInclude(gu => gu.User)
             .Where(u => u.User.User != null)
+            .Where(u => _db.XpUserSettings
+                .Any(s => s.UserId == u.User.UserId && s.Global == true))
             .ToListAsync();
 
         return ranks
@@ -55,6 +57,9 @@ public class LeaderboardDbService
     public async Task<XpGuildSettings> GetOrCreateSettingsAsync(Guild guild) =>
         await _db.XpGuildSettings.FirstOrDefaultAsync(s => s.Guild == guild)
         ?? _db.XpGuildSettings.Add(new XpGuildSettings { Guild = guild, Active = false }).Entity;
+    public async Task<XpUserSettings> GetOrCreateUserSettingsAsync(User user) =>
+        await _db.XpUserSettings.FirstOrDefaultAsync(s => s.User == user)
+        ?? _db.XpUserSettings.Add(new XpUserSettings { User = user, Active = false, Global = false }).Entity;
 
     public async Task<XpGuildUserRank> GetOrCreateUserRankAsync(GuildUser guildUser) =>
         await _db.XpGuildUsers.FirstOrDefaultAsync(u => u.User == guildUser)

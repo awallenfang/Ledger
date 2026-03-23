@@ -81,6 +81,7 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
 
         if (!guildSettings.Active) { await db.SaveChangesAsync(); return; }
         var user = await guildService.GetOrCreateUserAsync(userId);
+        var userSettings = await leaderboardService.GetOrCreateUserSettingsAsync(user);
         var guildUser = await guildService.GetOrCreateGuildUserAsync(guild, user);
         var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUser);
         await db.SaveChangesAsync();

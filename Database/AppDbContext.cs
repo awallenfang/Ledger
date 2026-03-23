@@ -9,6 +9,7 @@ public class AppDbContext : DbContext
     public DbSet<GuildUser> GuildUsers { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<XpGuildSettings> XpGuildSettings { get; set; }
+    public DbSet<XpUserSettings> XpUserSettings { get; set; }
     public DbSet<XpGuildUserRank> XpGuildUsers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

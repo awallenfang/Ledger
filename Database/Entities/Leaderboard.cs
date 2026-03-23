@@ -25,6 +25,7 @@ public class XpUserSettings
     [ForeignKey("UserId")]
     public required User User { get; set;}
     public bool Active {get; set;} = false;
+    public bool Global {get; set;} = false;
 }
 
 
