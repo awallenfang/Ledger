@@ -19,6 +19,10 @@
     <ProjectReference Include="..\Database\Database.csproj" />
     <ProjectReference Include="..\Ledger\Ledger.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Remove="../Ledger/appsettings*.json" />
+    <Content Remove="../Ledger/appsettings*.json" />
+  </ItemGroup>
 
 
   <ItemGroup>

@@ -1,10 +1,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY ["Ledger/Ledger.csproj", "Ledger/"]
-COPY ["Dashboard/Dashboard.csproj", "Dashboard/"]
+# COPY ["Dashboard/Dashboard.csproj", "Dashboard/"]
 COPY ["Database/Database.csproj", "Database/"]
 RUN dotnet restore Ledger/Ledger.csproj
-COPY Dashboard/ Dashboard/
+# COPY Dashboard/ Dashboard/
 COPY Database/ Database/
 COPY Ledger/ Ledger/
 

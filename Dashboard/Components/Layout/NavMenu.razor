@@ -19,7 +19,7 @@
              <span>Global Leaderboard</span>
         </NavLink> *@
       </ul>
-      <div>
+      @* <div>
         <AuthorizeView>
         <Authorized Context="auth">
             <p>Welcome, @auth.User.FindFirstValue("fluxer:global_name")!</p>
@@ -29,7 +29,7 @@
             <a href="/login" class="btn btn-primary text-dark">Login with Fluxer</a>
         </NotAuthorized>
     </AuthorizeView>
-      </div>
+      </div> *@
     </div>
   </div>
 </nav>
