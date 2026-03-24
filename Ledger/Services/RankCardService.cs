@@ -8,6 +8,8 @@ public class RankCardService : IDisposable
 {
     private static int Width = 600;
     private static int Height = 200;
+    private SKTypeface montserrat = SKTypeface.FromFile("/fonts/Montserrat-VariableFont_wght.ttf");
+
     private SKPaint bgPaint = new SKPaint { Color = new SKColor(15, 8, 32), IsAntialias = true };
     private SKPaint bgAltPaint = new SKPaint { Color = new SKColor(28, 17, 51), IsAntialias = true };
     private SKPaint accentPaint = new SKPaint { Color = new SKColor(183, 111, 255), IsAntialias = true };
@@ -19,14 +21,18 @@ public class RankCardService : IDisposable
     private SKPoint levelPoint = new SKPoint(150, 100);
     private SKPoint expPoint = new SKPoint(300, 140);
     private SKPoint rankPoint = new SKPoint(400, 100);
-    private SKFont nameFont = new SKFont(SKTypeface.FromFile("/fonts/Montserrat-VariableFont_wght.ttf"), 32);
-    private SKFont levelFont = new SKFont(SKTypeface.FromFile("/fonts/Montserrat-VariableFont_wght.ttf"), 24);
-    private SKFont expFont = new SKFont(SKTypeface.FromFile("/fonts/Montserrat-VariableFont_wght.ttf"), 18);
-    private SKFont rankFont = new SKFont(SKTypeface.FromFile("/fonts/Montserrat-VariableFont_wght.ttf"), 40);
+    private SKFont nameFont;
+    private SKFont levelFont;
+    private SKFont expFont;
+    private SKFont rankFont;
 
     public RankCardService()
     {
         bgRect = new SKRoundRect(new SKRect(0, 0, Width, Height), 20);
+        nameFont = new SKFont(montserrat, 32);
+        levelFont = new SKFont(montserrat, 24);
+        expFont = new SKFont(montserrat, 18);
+        rankFont = new SKFont(montserrat, 40);
         
     }
 
@@ -36,6 +42,13 @@ public class RankCardService : IDisposable
         bgPaint.Dispose();
         bgAltPaint.Dispose();
         accentPaint.Dispose();
+        textPaint.Dispose();
+        barBgRect.Dispose();
+        nameFont.Dispose();
+        levelFont.Dispose();
+        expFont.Dispose();
+        rankFont.Dispose();
+        montserrat.Dispose();
     }
 
     public byte[] GenerateRankCard(RankCardData data)
@@ -52,7 +65,7 @@ public class RankCardService : IDisposable
         canvas.DrawText(data.Username, namePoint, SKTextAlign.Left, nameFont, textPaint);
         canvas.DrawText($"Level {data.Level}", levelPoint, SKTextAlign.Left, levelFont, textPaint);
         canvas.DrawText($"{data.CurrentXp % 100} / 100", expPoint, SKTextAlign.Center, expFont, textPaint);
-        canvas.DrawText($"#{data.Position}", expPoint, SKTextAlign.Left, rankFont, accentPaint);
+        canvas.DrawText($"#{data.Position}", rankPoint, SKTextAlign.Left, rankFont, accentPaint);
 
         using var image = surface.Snapshot();
 
