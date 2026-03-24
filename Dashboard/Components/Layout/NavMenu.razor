@@ -29,7 +29,7 @@
               <NavLink class="btn btn-primary" href="profile">
                 <span>Profile</span>
               </NavLink>
-              <p class="mb-0">Welcome, @auth.User.FindFirstValue("fluxer:global_name")!</p>
+              <p class="mb-0">Welcome, @auth.User.FindFirst(ClaimTypes.Name)!.Value</p>
               <a href="/logout" class="btn btn-primary text-dark">Logout</a>
             </div>
           </Authorized>

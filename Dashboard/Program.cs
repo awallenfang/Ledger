@@ -6,11 +6,15 @@ using Ledger.Services;
 using Fluxify.Bot;
 using Fluxify.Core;
 using Fluxify.Gateway;
+using Fluxify.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Fluxify.Core.Credentials;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
+using Fluxify.Rest;
+using Microsoft.AspNetCore.Components.Authorization;
+using System.Net;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -21,35 +25,72 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+var token = builder.Configuration["token"]
+    ?? throw new InvalidOperationException("TOKEN is missing from configuration.");
+builder.Services.AddScoped(sp =>
+{
+    var botToken = builder.Configuration["token"]!;
 
+    return new FluxerConfig
+    {
+        CredentialProvider = async () =>
+        {
+            return new BotTokenCredentials(botToken);
+        },
+        LoggerFactory = sp.GetRequiredService<ILoggerFactory>(),
+        ServiceProvider = sp
+    };
+});
+builder.Services.AddFluxifyCore(sp => new FluxerConfig
+{
+    CredentialProvider = sp.GetRequiredService<IAccessTokenProvider>().GetAuthenticationTokenAsync
+});
+
+builder.Services.AddScoped(sp =>
+{
+    var config = new FluxerConfig
+    {
+        CredentialProvider = async () => new BotTokenCredentials(builder.Configuration["token"]!),
+        LoggerFactory = sp.GetRequiredService<ILoggerFactory>(),
+        ServiceProvider = sp
+    };
+    return new BotRestClient(config);
+});
+
+builder.Services.AddScoped<UserRestClient>(sp => 
+{
+    return new UserRestClient(new FluxerConfig
+    {
+        CredentialProvider = async () => 
+        {
+            var authState = await sp.GetRequiredService<AuthenticationStateProvider>().GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                var tokenProvider = sp.GetRequiredService<IAccessTokenProvider>();
+                var token = await tokenProvider.GetAuthenticationTokenAsync();
+                return token;
+            }
+            return new BotTokenCredentials(builder.Configuration["token"]!);
+        },
+        ServiceProvider = sp
+    });
+});
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = "Fluxer";
 })
-.AddCookie(options =>
-{
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.ExpireTimeSpan = TimeSpan.FromHours(24);
-    options.SlidingExpiration = true;
-})
-.AddOAuth<FluxerOAuthOptions, FluxerOAuthHandler>("Fluxer", options =>
-{
-    options.ClientId     = builder.Configuration["Fluxer:ClientId"]!;
-    options.ClientSecret = builder.Configuration["Fluxer:ClientSecret"]!;
-    options.GuildId      = builder.Configuration["Fluxer:GuildId"] ?? string.Empty;
-    options.Permissions  = builder.Configuration["Fluxer:Permissions"] ?? string.Empty;
-    options.Scope        = "identify guilds";
+.AddFluxer(o =>
+    {
+        o.ClientId = builder.Configuration["Fluxer:ClientId"]!;
+        o.ClientSecret = builder.Configuration["Fluxer:ClientSecret"]!;
 
-    options.AuthorizationEndpoint = "https://web.fluxer.app/oauth2/authorize";
-    options.TokenEndpoint = "https://api.fluxer.app/oauth2/token";
-    options.UserInformationEndpoint = "https://api.fluxer.app/oauth2/userinfo";
+        o.Scope.Add("identify");
+        o.Scope.Add("guilds");
 
-    options.CallbackPath = "/signin-fluxer";
-    options.SaveTokens   = true;
-});
+        o.SaveTokens = true;
+    })
+    .AddCookie();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthorization();
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -57,52 +98,23 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<LeaderboardDbService>();
 builder.Services.AddScoped<GuildDbService>();
-var token = builder.Configuration["token"]
-            ?? throw new InvalidOperationException("TOKEN is missing from configuration.");
-builder.Services.TryAddSingleton<FluxerConfig>(sp =>
-{
-
-    return new FluxerConfig()
-    {
-        Credentials = new BotTokenCredentials(token),
-        LoggerFactory = sp.GetRequiredService<ILoggerFactory>(),
-        ServiceProvider = sp
-    };
-});
-
-builder.Services.TryAddTransient<AuthenticationHeaderHandler>();
-builder.Services.TryAddTransient(sp =>
-{
-    var config = sp.GetRequiredService<FluxerConfig>();
-
-    return config.HttpClientFactory.Invoke(config);
-});
 
 
-builder.Services.AddSingleton(new GatewayConfig()
-{
-});
-builder.Services.AddSingleton(sp => new Bot("!", sp.GetRequiredService<FluxerConfig>(), sp.GetRequiredService<GatewayConfig>()));
-
-builder.Services.AddScoped<LedgerAPIService>();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<FluxerApiService>();
 var app = builder.Build();
 app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 
-using( var scope = app.Services.CreateScope())
+using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();   
+    await db.Database.MigrateAsync();
 }
 
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
@@ -127,3 +139,6 @@ app.MapGet("/logout", async (HttpContext ctx) =>
     return Results.Redirect("/");
 });
 app.Run();
+
+public class BotRestClient(FluxerConfig config) : RestClient(config);
+public class UserRestClient(FluxerConfig config) : RestClient(config);

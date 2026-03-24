@@ -1,17 +1,15 @@
 @page "/leaderboard/{guild_id}"
 @attribute [ExcludeFromInteractiveRouting]
+@using Fluxify.Rest
 @using Ledger.Services
 @using Database
 @using Database.Services
 @using Microsoft.AspNetCore.Mvc.ModelBinding
 @inject LeaderboardDbService db
-@inject LedgerAPIService api
+@inject BotRestClient rest
 <h1>Leaderboard</h1>
-@inject FluxerApiService FluxerApi
 @inject AuthenticationStateProvider AuthStateProvider
 @using System.Security.Claims
-@inject FluxerApiService FluxerApi
-@inject AuthenticationStateProvider AuthStateProvider
 
 @using Dashboard.Models
 
@@ -66,15 +64,19 @@ else
         var idx = 1;
         foreach (var user in db_users)
         {
-            actual_users.Add(
-                new User
-                {
-                    Name = await api.GetUserName(user.User.User),
-                    Exp = user.Exp,
-                    CurrentLevel = user.Level,
-                    Position = idx,
-                }
-            );
+            var fluxerUser = await rest.Users[user.User.UserId].GetAsync();
+            if (fluxerUser is not null) {
+                actual_users.Add(
+                    new User
+                    {
+                        Name = fluxerUser.Username,
+                        Exp = user.Exp,
+                        CurrentLevel = user.Level,
+                        Position = idx,
+                    }
+                );
+
+            }
             idx += 1;
         }
         users = actual_users.ToArray();

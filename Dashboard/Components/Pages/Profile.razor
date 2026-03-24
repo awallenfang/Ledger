@@ -1,9 +1,12 @@
 @page "/profile"
 @attribute [Authorize]
 @rendermode InteractiveServer
-@using System.Security.Claims
+@using Fluxify.Dto.OAuth2
+@using Fluxify.Rest
 @using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Extensions.Configuration.UserSecrets
 @inject LeaderboardDbService db
 @inject GuildDbService guild_db
 <PageTitle>Profile Settings</PageTitle>
@@ -18,29 +21,40 @@
 @code {
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
-
-    private ClaimsPrincipal User { get; set; } = new();
+    @* [PersistentState] *@
+    public OAuth2MeResponse? Me { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        
-        if (AuthenticationStateTask is not null)
+        model ??= new();
+    
+        try
         {
-            var state = await AuthenticationStateTask;
-            User = state.User;
-        }
-        if (model == null)
-        {
-            model ??= new();
-            if (long.TryParse(User.FindFirstValue("fluxer:id"), out var userId))
+            var authState = await AuthenticationStateTask!;
+            var claimsUser = authState.User;
+
+            if (authState.User.Identity?.IsAuthenticated == true)
             {
-                var user = await guild_db.GetOrCreateUserAsync(userId);
-                var settings = await db.GetOrCreateUserSettingsAsync(user);
-                if (settings is not null)
+                var userIdString = claimsUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (long.TryParse(userIdString, out long userId))
                 {
-                    model.Global = settings.Global;
+                    var dbUser = await guild_db.GetOrCreateUserAsync(userId);
+                    var settings = await db.GetOrCreateUserSettingsAsync(dbUser);
+                
+                    if (settings is not null)
+                    {
+                        model.Global = settings.Global;
+                    }
+            
                 }
+
+                        
+
             }
+        }
+        catch (Fluxify.Rest.RestApiException ex)
+        {
+            errorMessage = "Could not load profile from Fluxify. Are you logged in?";
         }
     }
 
@@ -57,19 +71,27 @@
 
         try
         {
-            if (!long.TryParse(User.FindFirstValue("fluxer:id"), out var userId))
-            {
-                errorMessage = "Could not resolve user ID.";
-                return;
-            }
+            var authState = await AuthenticationStateTask!;
+            var claimsUser = authState.User;
 
-            await db.UpdateUserSettings(userId, model.Global);
-            success = true;
-            _ = Task.Delay(3000).ContinueWith(_ =>
-        {
-            success = false;
-            InvokeAsync(StateHasChanged);
-        });
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                var userIdString = claimsUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (long.TryParse(userIdString, out long userId))
+                {
+                    await db.UpdateUserSettings(userId, model.Global);
+                    success = true;
+                    _ = Task.Delay(3000).ContinueWith(_ =>
+                {
+                    success = false;
+                    InvokeAsync(StateHasChanged);
+                });
+            
+                }
+
+                        
+
+            }
         }
         catch (Exception ex)
         {
@@ -104,15 +126,24 @@
         <button type="button" class="btn-close" @onclick="() => errorMessage = null" aria-label="Close"></button>
     </div>
 }
-
-<EditForm Model="model" OnValidSubmit="Submit" FormName="Starship2">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-    <div class="form-group mt-3">
-        <InputCheckbox @bind-Value="model!.Global" class="form-check-input" id="globalCheck" />
-        <label class="form-label" for="globalCheck">Show rank on global leaderboards</label>
+@if (model == null)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
     </div>
-    <button type="submit" class="btn btn-primary" disabled="@isLoading">
-        @(isLoading ? "Saving..." : "Save")
-    </button>
-</EditForm>
+    <p><em>Loading profile...</em></p>
+}
+else
+{
+    <EditForm Model="model" OnValidSubmit="Submit" FormName="Starship2">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="form-group mt-3">
+            <InputCheckbox @bind-Value="model!.Global" class="form-check-input" id="globalCheck" />
+            <label class="form-label" for="globalCheck">Show rank on global leaderboards</label>
+        </div>
+        <button type="submit" class="btn btn-primary" disabled="@isLoading">
+            @(isLoading ? "Saving..." : "Save")
+        </button>
+    </EditForm>
+}
