@@ -64,13 +64,13 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
     private async Task HandleExpAsync(Message data)
     {
         if (data.Content?.Length <= 5) return;
+        // Check if this even is a guild
+        if (data.Channel is not GuildTextChannel guildTextChannel) return;
+        if (data is {Author.Bot: true}) return;
         using var scope = ServiceLocator.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var guildService = scope.ServiceProvider.GetRequiredService<GuildDbService>();
         var leaderboardService = scope.ServiceProvider.GetRequiredService<LeaderboardDbService>();
-
-        // Check if this even is a guild
-        if (data.Channel is not GuildTextChannel guildTextChannel) return;
 
         var userId = (long)(ulong)data.Author.Id;
         var guildId = (long)(ulong)guildTextChannel.Guild.Id;

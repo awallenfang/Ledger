@@ -1,17 +1,19 @@
 @page "/profile"
 @attribute [Authorize]
+@rendermode InteractiveServer
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject LeaderboardDbService db
 @inject GuildDbService guild_db
-<h3>You are logged in!</h3>
-
+<PageTitle>Profile Settings</PageTitle>
+<h3>Profile Settings</h3>
+@* 
 <p>Username: @User.FindFirstValue(ClaimTypes.Name)</p>
 <p>Email: @User.FindFirstValue(ClaimTypes.Email)</p>
 <p>Global name: @User.FindFirstValue("fluxer:global_name")</p>
 
-<a href="/logout" class="btn btn-secondary">Logout</a>
+<a href="/logout" class="btn btn-secondary">Logout</a> *@
 
 @code {
     [CascadingParameter]
@@ -21,28 +23,34 @@
 
     protected override async Task OnInitializedAsync()
     {
+        
         if (AuthenticationStateTask is not null)
         {
             var state = await AuthenticationStateTask;
             User = state.User;
         }
-        if (long.TryParse(User.FindFirstValue("fluxer:id"), out var userId))
+        if (model == null)
         {
-            var user = await guild_db.GetOrCreateUserAsync(userId);
-            var settings = await db.GetOrCreateUserSettingsAsync(user);
-            if (settings is not null)
+            model ??= new();
+            if (long.TryParse(User.FindFirstValue("fluxer:id"), out var userId))
             {
-                model.Global = settings.Global;
+                var user = await guild_db.GetOrCreateUserAsync(userId);
+                var settings = await db.GetOrCreateUserSettingsAsync(user);
+                if (settings is not null)
+                {
+                    model.Global = settings.Global;
+                }
             }
         }
     }
 
-    private FormModel model = new();
+    [SupplyParameterFromForm]
+    private FormModel? model { get; set; }
     private bool isLoading = false;
     private bool success = false;
     private string? errorMessage;
 
-    private async Task HandleSubmit()
+    private async Task Submit()
     {
         isLoading = true;
         errorMessage = null;
@@ -57,6 +65,11 @@
 
             await db.UpdateUserSettings(userId, model.Global);
             success = true;
+            _ = Task.Delay(3000).ContinueWith(_ =>
+        {
+            success = false;
+            InvokeAsync(StateHasChanged);
+        });
         }
         catch (Exception ex)
         {
@@ -70,29 +83,36 @@
 
     public class FormModel
     {
-        [SupplyParameterFromForm]
+        
         public bool Global { get; set; }
     }
 }
 
 
-
-<EditForm Model="@model" OnValidSubmit="HandleSubmit" FormName="UserSettings">
-    <DataAnnotationsValidator />
-
-    <div>
-        <label>Show rank on global leaderboards</label>
-        <InputCheckbox @bind-Value="model.Global" />
-        <ValidationMessage For="@(() => model.Global)" />
+@if (success)
+{
+    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+        <strong>Saved!</strong> Your profile settings have been updated.
+        <button type="button" class="btn-close" @onclick="() => success = false" aria-label="Close"></button>
     </div>
+}
 
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+        <strong>Error!</strong> @errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = null" aria-label="Close"></button>
+    </div>
+}
 
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <p style="color:red">@errorMessage</p>
-    }
-
-    <button type="submit" disabled="@isLoading">
-        @(isLoading ? "Submitting..." : "Submit")
+<EditForm Model="model" OnValidSubmit="Submit" FormName="Starship2">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="form-group mt-3">
+        <InputCheckbox @bind-Value="model!.Global" class="form-check-input" id="globalCheck" />
+        <label class="form-label" for="globalCheck">Show rank on global leaderboards</label>
+    </div>
+    <button type="submit" class="btn btn-primary" disabled="@isLoading">
+        @(isLoading ? "Saving..." : "Save")
     </button>
 </EditForm>

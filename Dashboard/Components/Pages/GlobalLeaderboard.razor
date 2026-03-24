@@ -14,9 +14,7 @@
 
 @using Dashboard.Models
 
-@code {
-    
-}
+<PageTitle>Global Leaderboard</PageTitle>
 @if (users == null)
 {
     <p><em>There seems to be no users with experience on this server...</em></p>
@@ -24,6 +22,40 @@
 else
 {
     <table class="table w-100 align-middle text-center">
+    <thead>
+        <tr>
+            <td>Position</td>
+            <td>Name</td>
+            <td>Level</td>
+            <td>Exp</td>
+            <td class="d-none d-md-table-cell"></td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in users)
+        {
+            <tr>
+                <td>@user.Position</td>
+                <td>@user.Name</td>
+                <td>@user.CurrentLevel</td>
+                <td>@user.Exp</td>
+                <td class="d-none d-md-table-cell">
+                    <div style="width: 10rem; background: var(--bs-body-bg-alt); border-radius: 4px;">
+                        <div style="width: @((user.Exp % 100) / 2.0)%; background: var(--bs-primary); height: 10px; border-radius: 4px;"></div>
+                    </div>
+                </td>
+            </tr>
+            <tr class="d-table-row d-md-none">
+                <td colspan="4" class="pt-2">
+                    <div style="width: 100%; background: var(--bs-body-bg-alt); border-radius: 4px;">
+                        <div style="width: @((user.Exp % 100) / 2.0)%; background: var(--bs-primary); height: 10px; border-radius: 4px;"></div>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+    @* <table class="table w-100 align-middle text-center">
         <thead>
             <tr>
                 <td>Position</td>
@@ -37,13 +69,14 @@ else
             @foreach (var user in users)
             {
                 <tr>
+                    <td>@user.Position</td>
                     <td>@user.Name</td>
                     <td>@user.CurrentLevel</td>
                     <td>@user.Exp</td>
                     <td>
-                        <div style="width: 10rem; background: #eee; border-radius: 4px; vertical-align: middle">
+                       <div style="width: 10rem; background: var(--bs-body-bg-alt); border-radius: 4px; vertical-align: middle">
                             <div style="width: @( (user.Exp % 100) / 2.0 )%; 
-                                background: #4caf50; 
+                                background: var(--bs-primary); 
                                 height: 10px; 
                                 border-radius: 4px;">
                             </div>
@@ -52,7 +85,7 @@ else
                 </tr>
             }
         </tbody>
-    </table>
+    </table> *@
 }
 
 @code {
