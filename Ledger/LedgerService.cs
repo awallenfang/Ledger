@@ -50,8 +50,8 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
             .Command("ping", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).PingCommand())
             .Command("leaderboard", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).LeaderboardCommand())
             .Command("rank", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).RankCommand())
-            .Command("xp", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).XpCommand(), Preconditions.RequireAuthorPermissions(Permissions.Administrator)
-);  
+            .Command("xp", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).XpCommand(), Preconditions.RequireAuthorPermissions(Permissions.Administrator))
+            .Command("help", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).HelpCommand());  
         using(var scope = serviceProvider.CreateScope())
         {
             await prefixService.InitAsync(scope.ServiceProvider.GetRequiredService<GuildDbService>());

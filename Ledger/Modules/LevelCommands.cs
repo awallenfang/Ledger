@@ -85,7 +85,7 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
         }
         else
         {
-            await ctx.ReplyAsync($"Leveling is currently disabled on this server");
+            await ctx.ReplyAsync($"Leveling is currently disabled on this server. Use `l!xp on` to enable it");
         }
         await db.SaveChangesAsync();
     }
