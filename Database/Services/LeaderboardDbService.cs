@@ -56,12 +56,10 @@ public class LeaderboardDbService
 
     public async Task<XpUserSettings> UpdateUserSettings(long userId, bool global)
     {
-        Console.WriteLine($"UpdateUserSettings called: userId={userId}, global={global}");
 
         var settings = await _db.XpUserSettings
             .FirstOrDefaultAsync(s => s.UserId == userId);
 
-        Console.WriteLine($"Existing settings: {(settings is null ? "null" : $"id={settings.Id}, global={settings.Global}")}");
 
         if (settings is null)
         {
@@ -75,18 +73,24 @@ public class LeaderboardDbService
                 Global = global
             };
             _db.XpUserSettings.Add(settings);
-            Console.WriteLine("Created new settings entry");
         }
         else
         {
             settings.Global = global;
-            Console.WriteLine($"Updated existing entry, new global={settings.Global}");
         }
 
         var rows = await _db.SaveChangesAsync();
-        Console.WriteLine($"Rows affected: {rows}");
 
         return settings;
+    }
+
+    public async Task<int> GetGuildRankAsync(XpGuildUserRank guildUser)
+    {
+        var rank = await _db.XpGuildUsers
+            .Where(u => u.User.Guild == guildUser.User.Guild && u.Exp > guildUser.Exp)
+            .CountAsync();
+        
+        return rank + 1;
     }
     public async Task<XpGuildSettings> GetOrCreateSettingsAsync(Guild guild) =>
         await _db.XpGuildSettings.FirstOrDefaultAsync(s => s.Guild == guild)

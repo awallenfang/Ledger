@@ -1,4 +1,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+RUN apt-get update && apt-get install -y \
+    libfontconfig1 \
+    libfreetype6 \
+    libpng16-16 \
+    libgl1 \
+    libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY ["Ledger/Ledger.csproj", "Ledger/"]
 # COPY ["Dashboard/Dashboard.csproj", "Dashboard/"]
@@ -13,6 +20,13 @@ WORKDIR "/src/Ledger"
 RUN dotnet publish -c Release -o /app/out
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
+RUN apt-get update && apt-get install -y \
+    libfontconfig1 \
+    libfreetype6 \
+    libpng16-16 \
+    libgl1 \
+    libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app/out .
 ENTRYPOINT ["dotnet", "Ledger.dll"]

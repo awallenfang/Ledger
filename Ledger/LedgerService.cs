@@ -13,7 +13,7 @@ using Fluxify.Commands.CommandCollection;
 using Database.Services;
 using Fluxify.Commands.Model;
 using Fluxify.Core.Types;
-public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService> logger) : BackgroundService
+public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService> logger, PrefixService prefixService, IServiceProvider serviceProvider) : BackgroundService
 {
 
     private readonly IConfiguration _config = config;
@@ -25,10 +25,8 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
     {
         try
         {
-            // Try to get the Provider from the context
             var provider = commandContext.Services;
 
-            // Manually set the context in the provider
             var contextProvider = provider.GetRequiredService<ContextProvider>();
             contextProvider.Context.Value = commandContext;
 
@@ -38,7 +36,6 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
         }
         catch (Exception ex)
         {
-            // THIS WILL FINALLY SHOW YOU WHY IT IS FAILING
             _logger.LogCritical(ex, "FAILED to resolve {Module}!", typeof(TModule).Name);
             throw;
         }
@@ -50,14 +47,15 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
 
 
         _bot.Commands
-            // .Command("ping", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).PingCommand())
             .Command("ping", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).PingCommand())
-            .Command("pong", async (CommandContext ctx) => await ctx.ReplyAsync("Pong"))
             .Command("leaderboard", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).LeaderboardCommand())
             .Command("rank", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).RankCommand())
-            .Command("xp", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).XpCommand()//, Preconditions.RequireAuthorPermissions(Permissions.Administrator)
-);
-
+            .Command("xp", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).XpCommand(), Preconditions.RequireAuthorPermissions(Permissions.Administrator)
+);  
+        using(var scope = serviceProvider.CreateScope())
+        {
+            await prefixService.InitAsync(scope.ServiceProvider.GetRequiredService<GuildDbService>());
+        } 
         await _bot.RunAsync(stoppingToken);
     }
 

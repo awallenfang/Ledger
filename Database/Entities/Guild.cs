@@ -9,6 +9,7 @@ public class Guild
     public long GuildId {get;set;}
     public string Name {get; set;} = string.Empty;
     public ICollection<GuildUser> GuildUsers { get; set; } = [];
+    public string Prefix {get; set;} = "l!";
 
 }
 

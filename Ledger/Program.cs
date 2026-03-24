@@ -32,6 +32,7 @@ var host = Host.CreateDefaultBuilder(args)
             options.UseNpgsql(connectionString));
         services.AddScoped<GuildDbService>();
         services.AddScoped<LeaderboardDbService>();
+        services.AddScoped<RankCardService>();
 
         services.AddSingleton<ContextProvider>()
             .AddScoped(sp => sp.GetRequiredService<ContextProvider>().Context.Value!);
@@ -62,10 +63,11 @@ var host = Host.CreateDefaultBuilder(args)
         var gatewayConfig = new GatewayConfig()
         {
             IgnoredGatewayEvents = ["PRESENCE_UPDATE"],
-            DefaultPresence = new(UserStatus.Online, CustomStatus: new CustomStatus(Text: "Ledger is listening!"))
+            DefaultPresence = new(UserStatus.Online, CustomStatus: new CustomStatus(Text: "l! | Ledger is listening!"))
         };
         services.AddSingleton(gatewayConfig);
-        services.AddSingleton(sp => new Bot("!", sp.GetRequiredService<FluxerConfig>(), gatewayConfig));
+        services.AddSingleton<PrefixService>();
+        services.AddSingleton(sp => new Bot("l!", sp.GetRequiredService<FluxerConfig>(), gatewayConfig));
         services.AddHostedService<LedgerService>();
     })
     .Build();
