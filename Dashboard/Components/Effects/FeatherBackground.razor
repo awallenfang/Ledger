@@ -1,0 +1,26 @@
+<div class="feather-container" aria-hidden="true">
+<div class="feather-region" aria-hidden="true">
+
+    @for (int i = 0; i < 20; i++)
+    {
+        <i class="bi bi-feather feather feather-pos" style="@GetStyle(i)"></i> 
+    }
+</div>
+</div>
+
+@code {
+    private string GetStyle(int index) 
+    {
+        var left = Random.Shared.Next()  % 100;
+        var top = (Random.Shared.Next()) % 100;
+        var duration = 8 + (index * 0.7) % 10;
+        var delay = duration *  ((float)Random.Shared.Next()  % 100) / 100;
+        var size = 0.8 + (index * 0.15) % 1.5;
+
+        return $"left: {left}%; " +
+               $"top: {top}%; " +
+               $"font-size: {size}rem; " +
+               $"animation-duration: {duration}s; " +
+               $"animation-delay: -{delay}s;";
+    }
+}

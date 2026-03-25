@@ -1,6 +1,6 @@
-﻿<nav class="navbar navbar-expand-lg">
+﻿<nav class="navbar navbar-expand-lg border-bottom-1">
   <div class="container-fluid">
-    <a class="navbar-brand" href="#"><img src="ledger.png" width=100 height=100 class="rounded-circle" alt=""></a>
+    <a class="navbar-brand" href="#"><img src="ledger.png" width=64 height=64 class="rounded-circle" alt=""></a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
     aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -15,7 +15,13 @@
              <span>Leaderboard</span>
         </NavLink> *@
         <div class="nav-item">
-        <NavLink class="btn btn-primary" href="global">
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+          <span>Home</span>
+        </NavLink>
+
+        </div>
+        <div class="nav-item">
+        <NavLink class="nav-link" href="global">
           <span>Global Leaderboard</span>
         </NavLink>
 
@@ -26,7 +32,7 @@
         <AuthorizeView>
           <Authorized Context="auth">
             <div class="d-flex flex-row align-items-center column-gap-2">
-              <NavLink class="btn btn-primary" href="profile">
+              <NavLink class="nav-link" href="profile">
                 <span>Profile</span>
               </NavLink>
               <p class="mb-0">Welcome, @auth.User.FindFirst(ClaimTypes.Name)!.Value</p>

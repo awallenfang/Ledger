@@ -111,13 +111,15 @@
     }
 
     .navbar {
-        background-color: #{$body-bg};
+        background-color: #{$body-bg-alt};
+        border-bottom: 0.5px solid #{$border-color};
 
         .navbar-brand {
             color: #F0E8FF;
         }
 
         .nav-link {
+            position: relative;
             color: rgba($primary-light, 0.8);
 
             &:hover {
@@ -126,6 +128,9 @@
 
             &.active {
                 color: $primary-light;
+                border-bottom: 1.5px solid #{$border-color};
+                overflow:visible;
+
             }
         }
     }
