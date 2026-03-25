@@ -1,5 +1,5 @@
 @page "/global"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@* @rendermode @(new InteractiveServerRenderMode(prerender: false)) *@
 @using Fluxify.Rest
 @using Ledger.Services
 @using Database
@@ -7,7 +7,6 @@
 @using Microsoft.AspNetCore.Mvc.ModelBinding
 @inject LeaderboardDbService db
 @inject BotRestClient rest
-<h1>Leaderboard</h1>
 @inject AuthenticationStateProvider AuthStateProvider
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthStateProvider
@@ -15,6 +14,7 @@
 @using Dashboard.Models
 
 <PageTitle>Global Leaderboard</PageTitle>
+<h1>Leaderboard</h1>
 @if (users == null)
 {
     <p><em>There seems to be no users with experience on this server...</em></p>

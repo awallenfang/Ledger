@@ -1,45 +1,51 @@
 ﻿@page "/"
 
 <PageTitle>Ledger</PageTitle>
-<div class="w-100 text-center">
+<div class="w-100 text-center d-flex flex-column align-items-center">
 
-    <h1 class="text-center d-flex flex-row align-items-center justify-content-center column-gap-1">Ledger <img class="img-fluid ms-2" src="feather_icon_1.svg" height=100><FeatherBackground /> </h1>
-    <a class="icon-link icon-link-hover" href="https://github.com/Eschryn/Fluxify">
-    Built with Fluxify
-    <svg xmlns="http://www.w3.org/2000/svg" class="bi" viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
-    </svg>
-    </a>
+    <h1 class="text-center d-flex flex-row align-items-center justify-content-center column-gap-1">Ledger <img class="img-fluid ms-3" src="feather_icon_1.svg" height=100><FeatherBackground /> </h1>
+    <div class="d-flex flex-row align-items-center column-gap-4">
+        <p class="mb-0">
+            Built and hosted in the EU 
+        </p>
+        <a class="icon-link icon-link-hover d-flex flex-row align-items-center" href="https://github.com/Eschryn/Fluxify">
+            Made with Fluxify
+            <svg xmlns="http://www.w3.org/2000/svg" class="bi" viewBox="0 0 16 16" aria-hidden="true" alt="">
+                <path
+                d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z" />
+            </svg>
+        </a>
+        
+    </div>
 </div>
 <h2 class="my-3 text-center">The Fluxer leaderboard bot to rule them all!</h2>
 <div class="mt-5">
     <div class="d-flex flex-row align-items-center justify-content-around">
        
-        <a class="btn btn-primary btn-lg h2 link-underline link-underline-opacity-0 text-dark"
-                href="https://web.fluxer.app/oauth2/authorize?client_id=1477583679345730334&scope=bot&permissions=65600"><img
-            src="ledger.png" width=20 height=20 class="rounded-circle"> Invite Ledger to your community!</a>
-    </div>
-</div>
-<h3 class="text-center mt-5">Features</h3>
-<div class="row">
-    <div class="col-12 col-sm-6 col-lg-4 p-2">
-        <div class="card h-100 m-2" style="max-width: 20rem">
-            <div class="card-body">
-                <div class="card-title">Guild Leaderboards</div>
-                Track message leaderboards for guilds as we all know and love it
-            </div>
+        <a class="btn btn-primary text-white btn-lg h2 link-underline link-underline-opacity-0 text-dark"
+               href="https://web.fluxer.app/oauth2/authorize?client_id=1477583679345730334&scope=bot&permissions=65600"><img
+            src="ledger.png" width=20 height=20 class="rounded-circle" alt=""> Invite Ledger to your community!</a>
         </div>
     </div>
-    <div class="col-12 col-sm-6 col-lg-4 p-2">
-        <div class="card h-100 m-2" style="max-width: 20rem">
+    <h3 class="text-center mt-5">Features</h3>
+    <div class="row">
+        <div class="col-12 col-sm-6 col-lg-4 p-2">
+            <div class="card h-100 m-2" style="max-width: 20rem">
+                <div class="card-body">
+                    <div class="card-title">Guild Leaderboards</div>
+                    Track message leaderboards for guilds as we all know and love it
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4 p-2">
+            <div class="card h-100 m-2" style="max-width: 20rem">
         
-            <div class="card-body">
-                <div class="card-title">Global Leaderboards</div>
-                @* <div class="card-subtitle mb-2 text-muted">Coming soon</div> *@
-                Join the global message leaderboard that spans every guild Ledger is in
+                <div class="card-body">
+                    <div class="card-title">Global Leaderboards</div>
+                    Join the global message leaderboard that spans every guild Ledger is in
+                </div>
             </div>
         </div>
-    </div>
     <div class="col-12 col-sm-6 col-lg-4 p-2">
         <div class="card h-100 m-2" style="max-width: 20rem">
             <div class="card-body">
@@ -78,11 +84,11 @@
     </div>
 </div>
 
-<div class="container mt-5 d-flex flex-column align-items-center">
-    <h3>Do you need help or have any questions?</h3>
-    <p>Join the Ledger Fluxer Community to get direct support or suggest features!</p>
-    <a class="btn btn-primary btn-lg h2 link-underline link-underline-opacity-0 text-dark"
-            href="https://fluxer.gg/NhNZgYyO"><img src="ledger.png" width=20 height=20 class="rounded-circle"> Join the
-        Ledger Fluxer community!</a>
-</div>
+    <div class="container mt-5 d-flex flex-column align-items-center">
+        <h3>Do you need help or have any questions?</h3>
+        <p>Join the Ledger Fluxer Community to get direct support or suggest features!</p>
+        <a class="btn btn-primary text-white btn-lg h2 link-underline link-underline-opacity-0 text-dark"
+               href="https://fluxer.gg/NhNZgYyO"><img src="ledger.png" width=20 height=20 class="rounded-circle" alt=""> Join the
+            Ledger Fluxer community!</a>
+        </div>
 

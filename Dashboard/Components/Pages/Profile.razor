@@ -142,7 +142,7 @@ else
             <InputCheckbox @bind-Value="model!.Global" class="form-check-input" id="globalCheck" />
             <label class="form-label" for="globalCheck">Show rank on global leaderboards</label>
         </div>
-        <button type="submit" class="btn btn-primary" disabled="@isLoading">
+        <button type="submit" class="btn btn-primary text-white" disabled="@isLoading">
             @(isLoading ? "Saving..." : "Save")
         </button>
     </EditForm>
