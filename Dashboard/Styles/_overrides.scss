@@ -67,8 +67,10 @@
 
 [data-bs-theme="dark"] {
     * {
-        --bs-body-bg-alt: #{$body-bg-alt}
-    }
+        --bs-body-bg-alt: #{$body-bg-alt};
+        --bs-navbar-toggler-border-color: #{tint-color($primary, 20%)};
+        --bs-navbar-color: #{tint-color($primary, 20%)};
+    } 
     .btn-primary {
         --bs-btn-bg: #{$primary};
         --bs-btn-border-color: #{$primary};
