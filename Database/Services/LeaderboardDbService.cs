@@ -19,7 +19,7 @@ public class LeaderboardDbService
         _db = db;
     }
 
-    public async Task<List<XpGuildUserRank>?> GetGuildLeaderboard(long guildId)
+    public async Task<List<XpGuildUserRank>?> GetGuildLeaderboard(long guildId, int page, int pageSize, int take)
     {
         var guild = await _db.Guilds.FindAsync(guildId);
         if (guild == null) return null;
@@ -31,10 +31,12 @@ public class LeaderboardDbService
             .ThenInclude(gu => gu.User)
         .Where(u => u.User.GuildId == guildId)
         .OrderByDescending(u => u.Exp)
+        .Skip(page * pageSize)
+        .Take(take)
         .ToListAsync();
     }
 
-    public async Task<List<LeaderboardEntry>> GetGlobalLeaderboard()
+    public async Task<List<LeaderboardEntry>> GetGlobalLeaderboard(int page, int pageSize, int take)
     {
         var ranks = await _db.XpGuildUsers
             .Include(u => u.User)
@@ -52,6 +54,8 @@ public class LeaderboardDbService
                 Exp = g.Sum(u => u.Exp)
             })
             .OrderByDescending(e => e.Exp)
+            .Skip(page * pageSize)
+            .Take(take)
             .ToList();
     }
 
