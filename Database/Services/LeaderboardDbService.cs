@@ -19,21 +19,51 @@ public class LeaderboardDbService
         _db = db;
     }
 
-    public async Task<List<XpGuildUserRank>?> GetGuildLeaderboard(long guildId, int page, int pageSize, int take)
+    public async Task<List<LeaderboardEntry>?> GetGuildLeaderboard(long guildId, int page, int pageSize, int take)
     {
         var guild = await _db.Guilds.FindAsync(guildId);
         if (guild == null) return null;
 
         var guild_settings = await GetOrCreateSettingsAsync(guild);
 
-        return await _db.XpGuildUsers
+        var ranks =  await _db.XpGuildUsers
         .Include(u => u.User)
             .ThenInclude(gu => gu.User)
         .Where(u => u.User.GuildId == guildId)
         .OrderByDescending(u => u.Exp)
+        .Select(u => new LeaderboardEntry
+            {
+                User = u.User.User,
+                Exp = u.Exp
+            })
         .Skip(page * pageSize)
-        .Take(take)
+            .Take(take)
         .ToListAsync();
+
+        return ranks;
+    }
+    public async Task<List<LeaderboardEntry>?> GetGuildVCLeaderboard(long guildId, int page, int pageSize, int take)
+    {
+        var guild = await _db.Guilds.FindAsync(guildId);
+        if (guild == null) return null;
+
+        var guild_settings = await GetOrCreateSettingsAsync(guild);
+
+        var ranks =  await _db.VCXpGuildUsers
+        .Include(u => u.User)
+            .ThenInclude(gu => gu.User)
+        .Where(u => u.User.GuildId == guildId)
+        .OrderByDescending(u => u.Exp)
+        .Select(u => new LeaderboardEntry
+            {
+                User = u.User.User,
+                Exp = u.Exp
+            })
+        .Skip(page * pageSize)
+            .Take(take)
+        .ToListAsync();
+
+        return ranks;
     }
 
     public async Task<List<LeaderboardEntry>> GetGlobalLeaderboard(int page, int pageSize, int take)
