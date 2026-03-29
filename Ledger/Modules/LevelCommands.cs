@@ -15,6 +15,7 @@ using Fluxify.Core.Types;
 using Fluxify.Application.Model.Messages;
 using Fluxify.Dto.Uploads;
 using System.Net.Mime;
+using Fluxify.Application.Entities.Channels.Guilds;
 
 namespace Ledger.Modules;
 

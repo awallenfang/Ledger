@@ -1,3 +1,4 @@
+using Fluxify.Core.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace Database.Services;
@@ -92,15 +93,63 @@ public class LeaderboardDbService
         
         return rank + 1;
     }
-    public async Task<XpGuildSettings> GetOrCreateSettingsAsync(Guild guild) =>
-        await _db.XpGuildSettings.FirstOrDefaultAsync(s => s.Guild == guild)
+    public async Task<XpGuildSettings> GetOrCreateSettingsAsync(Guild guild)
+    {
+        var settings = await _db.XpGuildSettings.FirstOrDefaultAsync(s => s.Guild == guild)
         ?? _db.XpGuildSettings.Add(new XpGuildSettings { Guild = guild, Active = false }).Entity;
-    public async Task<XpUserSettings> GetOrCreateUserSettingsAsync(User user) =>
-        await _db.XpUserSettings.FirstOrDefaultAsync(s => s.User == user)
+        await _db.SaveChangesAsync();
+        return settings;
+    }
+    public async Task<XpUserSettings> GetOrCreateUserSettingsAsync(User user)
+    {
+        var settings = await _db.XpUserSettings.FirstOrDefaultAsync(s => s.User == user)
         ?? _db.XpUserSettings.Add(new XpUserSettings { User = user, Active = false, Global = false }).Entity;
+        await _db.SaveChangesAsync();
+        return settings;
+    }
+        
 
-    public async Task<XpGuildUserRank> GetOrCreateUserRankAsync(GuildUser guildUser) =>
-        await _db.XpGuildUsers.FirstOrDefaultAsync(u => u.User == guildUser)
+    public async Task<XpGuildUserRank> GetOrCreateUserRankAsync(GuildUser guildUser)
+    {
+        var rank = await _db.XpGuildUsers.FirstOrDefaultAsync(u => u.User == guildUser)
         ?? _db.XpGuildUsers.Add(new XpGuildUserRank { GuildUserId = guildUser.Id, User = guildUser, Exp = 0 }).Entity;
+        await _db.SaveChangesAsync();
+        return rank;
+        
+    }
+    public async Task<VoiceXpGuildUserRank> GetOrCreateUserVcRankAsync(GuildUser guildUser)
+    {
+        var rank = await _db.VCXpGuildUsers.FirstOrDefaultAsync(s => s.User == guildUser)
+                ?? _db.VCXpGuildUsers.Add(new VoiceXpGuildUserRank { GuildUserId = guildUser.Id, User = guildUser, Exp = 0 }).Entity;
+        await _db.SaveChangesAsync();
+        return rank;
+        
+    }
+
+    public async Task UpdateVCSession(Snowflake userId, Snowflake guildId, bool inVc)
+    {
+        var guildUser = await _db.GuildUsers.Where(u => (u.GuildId == (long)guildId) &&(u.UserId == (long) userId)).FirstOrDefaultAsync();
+        if (guildUser == null) return;
+        if (inVc)
+        {
+            var session = await _db.VCSessions.FirstOrDefaultAsync(s => s.User == guildUser)
+                ?? _db.VCSessions.Add(new VoiceChatSession { GuildUserId = guildUser.Id, User = guildUser }).Entity;
+        } else
+        {
+            var session = await _db.VCSessions.FirstAsync(s => s.User == guildUser);
+            _db.VCSessions.Remove(session);
+        }
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<List<VoiceChatSession>> GetVCSessions()
+    {
+        return await _db.VCSessions
+            .Include(u => u.User)
+            .ThenInclude(gu => gu.User)
+            .Include(u => u.User)
+            .ThenInclude(gu => gu.Guild)
+            .ToListAsync();
+    }
 
 }

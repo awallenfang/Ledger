@@ -33,6 +33,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<GuildDbService>();
         services.AddScoped<LeaderboardDbService>();
         services.AddScoped<RankCardService>();
+        services.AddHostedService<VoiceUpdateService>();
 
         services.AddSingleton<ContextProvider>()
             .AddScoped(sp => sp.GetRequiredService<ContextProvider>().Context.Value!);

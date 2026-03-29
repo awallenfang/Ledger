@@ -33,23 +33,23 @@
             var authState = await AuthenticationStateTask!;
             var claimsUser = authState.User;
 
-            if (authState.User.Identity?.IsAuthenticated == true)
+            if (authState.User.Identity?.IsAuthenticated != true)
             {
-                var userIdString = claimsUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (long.TryParse(userIdString, out long userId))
-                {
-                    var dbUser = await guild_db.GetOrCreateUserAsync(userId);
-                    var settings = await db.GetOrCreateUserSettingsAsync(dbUser);
-                
-                    if (settings is not null)
-                    {
-                        model.Global = settings.Global;
-                    }
+                return;
+            }
+
+            var userIdString = claimsUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!long.TryParse(userIdString, out long userId))
+            {
+                return;
+            }
             
-                }
-
-                        
-
+            var dbUser = await guild_db.GetOrCreateUserAsync(userId);
+            var settings = await db.GetOrCreateUserSettingsAsync(dbUser);
+        
+            if (settings is not null)
+            {
+                model.Global = settings.Global;
             }
         }
         catch (Fluxify.Rest.RestApiException ex)
@@ -66,6 +66,11 @@
 
     private async Task Submit()
     {
+        if (model == null)
+        {
+            throw new InvalidOperationException("model cannot be null during submit");
+        }
+
         isLoading = true;
         errorMessage = null;
 
@@ -79,18 +84,9 @@
                 var userIdString = claimsUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (long.TryParse(userIdString, out long userId))
                 {
-                    await db.UpdateUserSettings(userId, model.Global);
-                    success = true;
-                    _ = Task.Delay(3000).ContinueWith(_ =>
-                {
-                    success = false;
-                    InvokeAsync(StateHasChanged);
-                });
-            
+                    await db.UpdateUserSettings(userId, model!.Global);
+                    _ = ShowSuccessMessage();   
                 }
-
-                        
-
             }
         }
         catch (Exception ex)
@@ -101,6 +97,14 @@
         {
             isLoading = false;
         }
+    }
+
+    private async Task ShowSuccessMessage(int time = 3000) {
+        success = true;
+        await Task.Delay(time);
+        success = false;
+
+        await InvokeAsync(StateHasChanged);       
     }
 
     public class FormModel

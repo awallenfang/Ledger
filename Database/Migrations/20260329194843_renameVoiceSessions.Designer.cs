@@ -3,6 +3,7 @@ using System;
 using Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Database.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260329194843_renameVoiceSessions")]
+    partial class renameVoiceSessions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -101,27 +104,6 @@ namespace Database.Migrations
                     b.HasIndex("GuildUserId");
 
                     b.ToTable("VCSessions");
-                });
-
-            modelBuilder.Entity("Database.VoiceXpGuildUserRank", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("Exp")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("GuildUserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GuildUserId");
-
-                    b.ToTable("VCXpGuildUsers");
                 });
 
             modelBuilder.Entity("Database.XpGuildSettings", b =>
@@ -239,17 +221,6 @@ namespace Database.Migrations
                 });
 
             modelBuilder.Entity("Database.VoiceChatSession", b =>
-                {
-                    b.HasOne("Database.GuildUser", "User")
-                        .WithMany()
-                        .HasForeignKey("GuildUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Database.VoiceXpGuildUserRank", b =>
                 {
                     b.HasOne("Database.GuildUser", "User")
                         .WithMany()

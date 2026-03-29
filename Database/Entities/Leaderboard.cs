@@ -71,4 +71,32 @@ public class XpGuildUserRank
         }
     }
 }
+public class VoiceXpGuildUserRank
+{
+   
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public long Id {get; set;}
+    public required long GuildUserId { get; set;}
+    [ForeignKey("GuildUserId")]
+    public required GuildUser User {get; set;}
+    public int Exp {get; set;}
 
+    [NotMapped]
+    public int Level => (int)(Exp / 100.0) + 1;
+
+    public void AddExp()
+    {
+            Exp += Random.Shared.Next(15, 25);
+    }
+}
+
+public class VoiceChatSession
+{
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public long Id { get; set; }
+    public required long GuildUserId { get; set;}
+    [ForeignKey("GuildUserId")]
+    public required GuildUser User {get; set;}
+}

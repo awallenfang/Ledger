@@ -6,18 +6,20 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Fluxify.Bot;
 using Fluxify.Application.Entities.Messages;
-using Fluxify.Application.Entities.Channels;
 using Ledger.Modules;
 using Fluxify.Commands;
 using Fluxify.Commands.CommandCollection;
 using Database.Services;
-using Fluxify.Commands.Model;
 using Fluxify.Core.Types;
-public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService> logger, PrefixService prefixService, IServiceProvider serviceProvider) : BackgroundService
+using Fluxify.Gateway.Model.Data.Voice;
+using Fluxify.Application.Entities.Channels.Guilds;
+using Ledger.Services;
+public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService> logger, PrefixService prefixService, IServiceProvider serviceProvider, IServiceScopeFactory scopeFactory) : BackgroundService
 {
 
     private readonly IConfiguration _config = config;
     private readonly ILogger<LedgerService> _logger = logger;
+    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
 
     private readonly Bot _bot = bot;
 
@@ -44,7 +46,7 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _bot.MessageReceived += HandleExpAsync;
-
+        _bot.Gateway.VoiceStateUpdate += VoiceUpdate;
 
         _bot.Commands
             .Command("ping", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).PingCommand())
@@ -89,5 +91,16 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
         await db.SaveChangesAsync();
     }
 
+    private async Task VoiceUpdate(VoiceStateResponse response)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var leaderboardDb = scope.ServiceProvider.GetRequiredService<LeaderboardDbService>();
+        var memberId = response.Member!.User!.Id;
+        var guildId = response.GuildId!;
+        var inVc = response.ChannelId is not null;
+
+        
+        await leaderboardDb.UpdateVCSession(memberId, (Snowflake)guildId, inVc);
+    }
 
 }
