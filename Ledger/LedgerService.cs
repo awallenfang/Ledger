@@ -95,12 +95,24 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
     {
         using var scope = _scopeFactory.CreateScope();
         var leaderboardDb = scope.ServiceProvider.GetRequiredService<LeaderboardDbService>();
+        var guildDb = scope.ServiceProvider.GetRequiredService<GuildDbService>();
+
         var memberId = response.Member!.User!.Id;
         var guildId = response.GuildId!;
         var inVc = response.ChannelId is not null;
 
-        
-        await leaderboardDb.UpdateVCSession(memberId, (Snowflake)guildId, inVc);
+        var guild = await guildDb.GetOrCreateGuildAsync((long)guildId);
+        var guildSettings = await leaderboardDb.GetOrCreateSettingsAsync(guild);
+        if (guildSettings.Active)
+        {
+            await leaderboardDb.UpdateVCSession(memberId, (Snowflake)guildId, inVc);
+            
+        } else
+        {
+            // Disable any still existing sessions
+            // TODO: Overkill, optimize this
+            await leaderboardDb.UpdateVCSession(memberId, (Snowflake)guildId, false);
+        }
     }
 
 }
