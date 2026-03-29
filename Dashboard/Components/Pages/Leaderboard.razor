@@ -15,6 +15,11 @@
 
 <PageTitle>Guild Leaderboard</PageTitle>
 <h1>Leaderboard</h1>
+
+<div class="d-flex justify-content-center gap-2 mt-3">
+    <a href="/leaderboard/vc/@guild_id" class="btn btn-primary text-white">Go to VC Leaderboard</a>
+</div>
+
 @if (users == null)
 {
     <p><em>There seems to be no users with experience on this server...</em></p>
@@ -58,12 +63,12 @@ else
 <div class="d-flex justify-content-center gap-2 mt-3">
     @if (page > 0)
     {
-        <a href="/leaderboard/@guild_id/@(page - 1)" class="btn btn-secondary">Previous</a>
+        <a href="/leaderboard/@guild_id/@(page - 1)" class="btn btn-primary text-white">Previous</a>
     }
     <span class="btn disabled">Page @(page + 1)</span>
     @if (HasNextPage)
     {
-        <a href="/leaderboard/@guild_id/@(page + 1)" class="btn btn-secondary">Next</a>
+        <a href="/leaderboard/@guild_id/@(page + 1)" class="btn btn-primary text-white">Next</a>
     }
 </div>
 
