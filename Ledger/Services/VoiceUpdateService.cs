@@ -1,8 +1,5 @@
 using Database;
 using Database.Services;
-using Fluxify.Bot;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

@@ -1,6 +1,5 @@
 
 using Fluxify.Commands;
-using Serilog;
 
 namespace Ledger.Modules;
 

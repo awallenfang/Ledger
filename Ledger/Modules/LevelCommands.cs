@@ -1,21 +1,12 @@
-using System.Reflection;
-using Serilog;
-using Microsoft.Extensions.DependencyInjection;
 using Database;
-using System.Data.Common;
-using Microsoft.EntityFrameworkCore;
 using Database.Services;
 using Microsoft.Extensions.Hosting;
 using Fluxify.Commands;
-using Fluxify.Application.Entities.Channels;
 using Fluxify.Commands.Exceptions;
 using Fluxify.Bot;
-using System.Collections.Frozen;
-using Fluxify.Core.Types;
 using Fluxify.Application.Model.Messages;
-using Fluxify.Dto.Uploads;
-using System.Net.Mime;
 using Fluxify.Application.Entities.Channels.Guilds;
+using SkiaSharp;
 
 namespace Ledger.Modules;
 
@@ -74,7 +65,7 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
                 Level = userXp.Level,
                 CurrentXp = userXp.Exp,
                 Position = await leaderboardService.GetGuildRankAsync(userXp)
-
+                // AvatarBitmap = LoadBitmapFromWebAsync(ctx.Message.Author.)
             };
             var rankCard = rankCardService.GenerateRankCard(rankCardData);
 
@@ -143,5 +134,27 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
 
         }
 
+    }
+
+    private async Task<SKBitmap?> LoadBitmapFromWebAsync(string url)
+    {
+        var client = new HttpClient();
+        try
+        {
+            using (Stream stream = await client.GetStreamAsync(url))
+            using (MemoryStream memStream = new MemoryStream())
+            {
+                await stream.CopyToAsync(memStream);
+                memStream.Seek(0, SeekOrigin.Begin);
+
+                var bitmap = SKBitmap.Decode(memStream);
+                return bitmap;
+            };
+        }
+        catch
+        {
+            // Handle error silently
+            return null;
+        }
     }
 }

@@ -1,7 +1,5 @@
 using Database;
 using Fluxify.Bot;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.EntityFrameworkCore;
 
 namespace Ledger.Services;
 

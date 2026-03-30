@@ -1,7 +1,3 @@
-using System.Drawing;
-using Humanizer;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using SkiaSharp;
 
 public class RankCardService : IDisposable
@@ -25,6 +21,7 @@ public class RankCardService : IDisposable
     private SKFont levelFont;
     private SKFont expFont;
     private SKFont rankFont;
+    private SKRect avatarRect;
 
     public RankCardService()
     {
@@ -33,7 +30,7 @@ public class RankCardService : IDisposable
         levelFont = new SKFont(montserrat, 24);
         expFont = new SKFont(montserrat, 18);
         rankFont = new SKFont(montserrat, 40);
-        
+        avatarRect = new SKRect(profilePoint.X - 35, profilePoint.Y - 35, profilePoint.X + 35, profilePoint.Y + 35);
     }
 
     public void Dispose()
@@ -61,11 +58,16 @@ public class RankCardService : IDisposable
         canvas.DrawRoundRect(bgRect, bgPaint);
         canvas.DrawRoundRect(barBgRect, bgAltPaint);
         canvas.DrawRoundRect(barRect, accentPaint);
-        canvas.DrawCircle(profilePoint, 50, accentPaint);
         canvas.DrawText(data.Username, namePoint, SKTextAlign.Left, nameFont, textPaint);
         canvas.DrawText($"Level {data.Level}", levelPoint, SKTextAlign.Left, levelFont, textPaint);
         canvas.DrawText($"{data.CurrentXp % 100} / 100", expPoint, SKTextAlign.Center, expFont, textPaint);
         canvas.DrawText($"#{data.Position}", rankPoint, SKTextAlign.Left, rankFont, accentPaint);
+        if (data.AvatarBitmap is not null)
+        {
+            canvas.DrawCircle(profilePoint, 50, accentPaint);
+            canvas.DrawBitmap(data.AvatarBitmap, avatarRect);
+            
+        }
 
         using var image = surface.Snapshot();
 

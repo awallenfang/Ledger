@@ -13,7 +13,6 @@ using Database.Services;
 using Fluxify.Core.Types;
 using Fluxify.Gateway.Model.Data.Voice;
 using Fluxify.Application.Entities.Channels.Guilds;
-using Ledger.Services;
 public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService> logger, PrefixService prefixService, IServiceProvider serviceProvider, IServiceScopeFactory scopeFactory) : BackgroundService
 {
 
