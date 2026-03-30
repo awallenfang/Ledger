@@ -13,6 +13,7 @@ using Database.Services;
 using Fluxify.Core.Types;
 using Fluxify.Gateway.Model.Data.Voice;
 using Fluxify.Application.Entities.Channels.Guilds;
+using Fluxify.Application.EventArgs;
 public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService> logger, PrefixService prefixService, IServiceProvider serviceProvider, IServiceScopeFactory scopeFactory) : BackgroundService
 {
 
@@ -52,26 +53,28 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
             .Command("leaderboard", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).LeaderboardCommand())
             .Command("rank", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).RankCommand())
             .Command("xp", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).XpCommand(), Preconditions.RequireAuthorPermissions(Permissions.Administrator))
+            .Command("prefix", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).PrefixCommand(), Preconditions.RequireAuthorPermissions(Permissions.Administrator))
             .Command("help", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).HelpCommand());  
-        using(var scope = serviceProvider.CreateScope())
-        {
-            await prefixService.InitAsync(scope.ServiceProvider.GetRequiredService<GuildDbService>());
-        } 
+        // using(var scope = serviceProvider.CreateScope())
+        // {
+        //     await prefixService.InitAsync(scope.ServiceProvider.GetRequiredService<GuildDbService>());
+        // } 
         await _bot.RunAsync(stoppingToken);
     }
 
-    private async Task HandleExpAsync(Message data)
+    private async Task HandleExpAsync(MessageEventArgs data)
     {
-        if (data.Content?.Length <= 5) return;
+        var message = data.Message;
+        if (message.Content?.Length <= 5) return;
         // Check if this even is a guild
-        if (data.Channel is not GuildTextChannel guildTextChannel) return;
-        if (data is {Author.Bot: true}) return;
+        if (message.Channel is not GuildTextChannel guildTextChannel) return;
+        if (message is {Author.Bot: true}) return;
         using var scope = ServiceLocator.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var guildService = scope.ServiceProvider.GetRequiredService<GuildDbService>();
         var leaderboardService = scope.ServiceProvider.GetRequiredService<LeaderboardDbService>();
 
-        var userId = (long)(ulong)data.Author.Id;
+        var userId = (long)(ulong)message.Author.Id;
         var guildId = (long)(ulong)guildTextChannel.Guild.Id;
 
         var guild = await guildService.GetOrCreateGuildAsync(guildId);

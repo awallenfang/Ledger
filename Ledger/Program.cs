@@ -68,7 +68,31 @@ var host = Host.CreateDefaultBuilder(args)
         };
         services.AddSingleton(gatewayConfig);
         services.AddSingleton<PrefixService>();
-        services.AddSingleton(sp => new Bot("l!", sp.GetRequiredService<FluxerConfig>(), gatewayConfig));
+        services.AddSingleton((sp) =>
+        {
+            var scopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
+
+            var config = new BotConfig("l!")
+            {
+                Credentials = new BotTokenCredentials(token),
+                FluxerConfig = {
+                    LoggerFactory = sp.GetRequiredService<ILoggerFactory>(),
+                    ServiceProvider = sp
+                },
+                GatewayConfig = sp.GetRequiredService<GatewayConfig>(),
+                CommandConfig =
+                {
+                    IsValidCommand = (m) => 
+                    {
+                        using var scope = scopeFactory.CreateScope();
+                        var prefixService = scope.ServiceProvider.GetRequiredService<PrefixService>();
+                        return prefixService.CheckPrefix(m);
+                    }
+                }
+            };
+            return config;
+        });
+        services.AddSingleton(sp => new Bot(sp.GetRequiredService<BotConfig>()));
         services.AddHostedService<LedgerService>();
     })
     .Build();

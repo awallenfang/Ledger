@@ -7,7 +7,7 @@
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Fluxify.Bot" Version="0.1.5-preview" />
+    <PackageReference Include="Fluxify.Bot" Version="0.1.6-preview" />
     <PackageReference Include="Fluxify.AspNetCore.Authentication" Version="0.1.5-preview" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OAuth" Version="2.3.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
