@@ -24,9 +24,17 @@ public class VoiceUpdateService : BackgroundService
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             foreach (var session in await leaderboardDb.GetVCSessions())
             {
-                var user = session.User;
-                var rank = await leaderboardDb.GetOrCreateUserVcRankAsync(user);
-                rank.AddExp();
+                // Check for stale sessions and remove them
+                if (session.LastTick > DateTime.Now.AddMinutes(-5))
+                {
+                    var user = session.User;
+                    var rank = await leaderboardDb.GetOrCreateUserVcRankAsync(user);
+                    rank.AddExp();
+                    
+                } else
+                {
+                    db.VCSessions.Remove(session);
+                }
                 await db.SaveChangesAsync();
             }
         }

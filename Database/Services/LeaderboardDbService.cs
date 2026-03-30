@@ -168,6 +168,7 @@ public class LeaderboardDbService
         {
             var session = await _db.VCSessions.FirstOrDefaultAsync(s => s.User == guildUser)
                 ?? _db.VCSessions.Add(new VoiceChatSession { GuildUserId = guildUser.Id, User = guildUser }).Entity;
+            session.LastTick = DateTime.Now;
         } else
         {
             var session = await _db.VCSessions.FirstAsync(s => s.User == guildUser);

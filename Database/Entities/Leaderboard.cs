@@ -99,4 +99,5 @@ public class VoiceChatSession
     public required long GuildUserId { get; set;}
     [ForeignKey("GuildUserId")]
     public required GuildUser User {get; set;}
+    public DateTime LastTick {get; set;} = DateTime.UtcNow;
 }
