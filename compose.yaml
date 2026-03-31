@@ -61,13 +61,13 @@ services:
     networks:
       - ledger
       - grafana
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - "7070:8080"
-    networks:
-      - ledger
+  # adminer:
+  #   image: adminer
+  #   restart: always
+  #   ports:
+  #     - "7070:8080"
+  #   networks:
+  #     - ledger
 networks:
   local:
     external: true
