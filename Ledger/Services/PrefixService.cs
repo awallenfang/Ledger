@@ -19,7 +19,6 @@ public class PrefixService
         var guildDb = scope.ServiceProvider.GetRequiredService<GuildDbService>();
         var guildId = m.Guild!.Id;
         var prefix = guildDb.GetPrefix((long)guildId);
-        Console.WriteLine($"Got guild {guildId} with prefix {prefix}");
         return m.Author.Bot is not true && m.Content!.StartsWith(prefix);
     }
 }
