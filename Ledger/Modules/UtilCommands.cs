@@ -22,27 +22,29 @@ public class UtilCommands(CommandContext ctx, GuildDbService guildDb)
         """);
     }
 
-    // public async Task PrefixCommand()
-    // {
-    //     var parts = ctx.Message.Content!.Split(" ", 2);
-    //     if (parts.Length < 2)
-    //     {
-    //         await ctx.ReplyAsync("Usage: !prefix <new_prefix>");
-    //         return;
-    //     }
-    //     var normalizedMessage = parts[1].ToLower().Trim();
+    public async Task PrefixCommand()
+    {
+        await ctx.ReplyAsync($"Sorry, this is currently disabled due to technical problems");
+        return;
+        var parts = ctx.Message.Content!.Split(" ", 2);
+        if (parts.Length < 2)
+        {
+            await ctx.ReplyAsync("Usage: !prefix <new_prefix>");
+            return;
+        }
+        var normalizedMessage = parts[1].ToLower().Trim();
 
-    //     if (normalizedMessage.Length > 0)
-    //     {
-    //         await guildDb.UpdatePrefix(normalizedMessage, (long)ctx.Guild!.Id);
-    //         await ctx.ReplyAsync($"The prefix was updated to `{normalizedMessage}`");
-    //         return;
-    //     }
-    //     else
-    //     {
-    //         await ctx.ReplyAsync($"The prefix was invalid and wasn't used");
-    //         return;
-    //     }
-    // }
+        if (normalizedMessage.Length > 0)
+        {
+            await guildDb.UpdatePrefix(normalizedMessage, (long)ctx.Guild!.Id);
+            await ctx.ReplyAsync($"The prefix was updated to `{normalizedMessage}`");
+            return;
+        }
+        else
+        {
+            await ctx.ReplyAsync($"The prefix was invalid and wasn't used");
+            return;
+        }
+    }
 
 }
