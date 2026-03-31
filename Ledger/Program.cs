@@ -16,6 +16,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Fluxify.Core.Credentials;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Prometheus;
 
 
 var host = Host.CreateDefaultBuilder(args)
@@ -96,7 +97,8 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddHostedService<LedgerService>();
     })
     .Build();
-
+var server = new MetricServer(port: 1234);
+server.Start();
 using (var scope = host.Services.CreateScope())
 {
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();

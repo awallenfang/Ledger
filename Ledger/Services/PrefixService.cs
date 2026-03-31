@@ -3,10 +3,14 @@ using Database.Services;
 using Fluxify.Application.Entities.Messages;
 using Fluxify.Core.Types;
 using Microsoft.Extensions.DependencyInjection;
+using Prometheus;
 
 public class PrefixService
 {
     private readonly IServiceScopeFactory _scopeFactory;
+
+    private static readonly Histogram TaskDuration = Metrics.CreateHistogram(
+    "prefix_fetching", "Duration of prefix fetching");
 
     public PrefixService(IServiceScopeFactory scopeFactory)
     {
@@ -15,10 +19,14 @@ public class PrefixService
 
     public bool CheckPrefix(Message m)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var guildDb = scope.ServiceProvider.GetRequiredService<GuildDbService>();
-        var guildId = m.Guild!.Id;
-        var prefix = guildDb.GetPrefix((long)guildId);
-        return m.Author.Bot is not true && m.Content!.StartsWith(prefix);
+        using (TaskDuration.NewTimer())
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var guildDb = scope.ServiceProvider.GetRequiredService<GuildDbService>();
+            var guildId = m.Guild!.Id;
+            var prefix = guildDb.GetPrefix((long)guildId);
+            return m.Author.Bot is not true && m.Content!.StartsWith(prefix);
+        }
+        
     }
 }

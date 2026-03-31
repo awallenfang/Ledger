@@ -7,28 +7,34 @@ using Fluxify.Bot;
 using Fluxify.Application.Model.Messages;
 using Fluxify.Application.Entities.Channels.Guilds;
 using SkiaSharp;
+using Prometheus;
 
 namespace Ledger.Modules;
 
 public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContext db, GuildDbService guildService, LeaderboardDbService leaderboardService, RankCardService rankCardService, Bot bot)
 {
+    private static readonly Histogram LeaderboardDuration = Metrics.CreateHistogram(
+    "leaderboard_command", "Sending leaderboard command");
     public async Task LeaderboardCommand()
     {
-        // Check if this even is a guild
-        if (ctx.Message.Channel is not GuildTextChannel guildTextChannel)
+        using (LeaderboardDuration.NewTimer())
         {
-            throw new CommandException("This seems to not be a guild, so leveling is disabled.");
-        }
+            // Check if this even is a guild
+            if (ctx.Message.Channel is not GuildTextChannel guildTextChannel)
+            {
+                throw new CommandException("This seems to not be a guild, so leveling is disabled.");
+            }
 
-        var guildId = (ulong)guildTextChannel.Guild.Id!;
+            var guildId = (ulong)guildTextChannel.Guild.Id!;
 
-        if (env.IsDevelopment())
-        {
-            await ctx.ReplyAsync($"This server's leaderboard is available at http://127.0.0.1:5248/leaderboard/{guildId}");
-        }
-        else
-        {
-            await ctx.ReplyAsync($"This server's leaderboard is available at https://ledger.ritzin.dev/leaderboard/{guildId}");
+            if (env.IsDevelopment())
+            {
+                await ctx.ReplyAsync($"This server's leaderboard is available at http://127.0.0.1:5248/leaderboard/{guildId}");
+            }
+            else
+            {
+                await ctx.ReplyAsync($"This server's leaderboard is available at https://ledger.ritzin.dev/leaderboard/{guildId}");
+            }
         }
     }
 
@@ -36,54 +42,64 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
     {
 
     }
-
+    private static readonly Histogram RankDuration = Metrics.CreateHistogram(
+    "rank_command", "Sending rank command");
     public async Task RankCommand()
     {
-        // Check if this even is a guild
-        if (ctx.Message.Channel is not GuildTextChannel guildTextChannel)
+        using (RankDuration.NewTimer())
         {
-            throw new CommandException("Command must be executed from a guild!");
-        }
 
-        var guildId = (ulong)guildTextChannel.Guild.Id!;
-        var userId = (ulong)ctx.Message.Author.Id;
-        // Fetch the corresponding database object and create it if it doesn't exist
-        var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
-
-        // Fetch the corresponding settings and create it if it doesn't exist
-        var guildSettings = await leaderboardService.GetOrCreateSettingsAsync(guild);
-
-        if (guildSettings.Active)
-        {
-            var user = await guildService.GetOrCreateUserAsync((long)userId);
-            var guildUser = await guildService.GetOrCreateGuildUserAsync(guild, user);
-            var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUser);
-
-            var rankCardData = new RankCardData
+            // Check if this even is a guild
+            if (ctx.Message.Channel is not GuildTextChannel guildTextChannel)
             {
-                Username = ctx.Message.Author.Username,
-                Level = userXp.Level,
-                CurrentXp = userXp.Exp,
-                Position = await leaderboardService.GetGuildRankAsync(userXp)
-                // AvatarBitmap = LoadBitmapFromWebAsync(ctx.Message.Author.)
-            };
-            var rankCard = rankCardService.GenerateRankCard(rankCardData);
+                throw new CommandException("Command must be executed from a guild!");
+            }
 
-            var builder = new MessageBuilder()
-            .WithAttachment(rankCard, "rank.png", "image/png")
-        .WithContent($"Level {userXp.Level}, {userXp.Exp} Exp");
+            var guildId = (ulong)guildTextChannel.Guild.Id!;
+            var userId = (ulong)ctx.Message.Author.Id;
+            // Fetch the corresponding database object and create it if it doesn't exist
+            var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
 
-            await ctx.ReplyAsync(builder.Build());
-        }
-        else
-        {
-            await ctx.ReplyAsync($"Leveling is currently disabled on this server. Use `l!xp on` to enable it");
+            // Fetch the corresponding settings and create it if it doesn't exist
+            var guildSettings = await leaderboardService.GetOrCreateSettingsAsync(guild);
+
+            if (guildSettings.Active)
+            {
+                var user = await guildService.GetOrCreateUserAsync((long)userId);
+                var guildUser = await guildService.GetOrCreateGuildUserAsync(guild, user);
+                var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUser);
+
+                var rankCardData = new RankCardData
+                {
+                    Username = ctx.Message.Author.Username,
+                    Level = userXp.Level,
+                    CurrentXp = userXp.Exp,
+                    Position = await leaderboardService.GetGuildRankAsync(userXp)
+                    // AvatarBitmap = LoadBitmapFromWebAsync(ctx.Message.Author.)
+                };
+                var rankCard = rankCardService.GenerateRankCard(rankCardData);
+
+                var builder = new MessageBuilder()
+                .WithAttachment(rankCard, "rank.png", "image/png")
+            .WithContent($"Level {userXp.Level}, {userXp.Exp} Exp");
+
+                await ctx.ReplyAsync(builder.Build());
+            }
+            else
+            {
+                await ctx.ReplyAsync($"Leveling is currently disabled on this server. Use `l!xp on` to enable it");
+            }
         }
         await db.SaveChangesAsync();
     }
 
+    private static readonly Histogram XpDuration = Metrics.CreateHistogram(
+    "xp_command", "Sending xp command");
     public async Task XpCommand()
     {
+        using (XpDuration.NewTimer())
+        {
+            
         var parts = ctx.Message.Content.Split(" ", 2);
         if (parts.Length < 2)
         {
@@ -113,7 +129,6 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
                 else
                 {
                     guildSettings.Active = true;
-                    await db.SaveChangesAsync();
                     await ctx.ReplyAsync("Leveling has been enabled on this server.");
 
                 }
@@ -124,7 +139,6 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
                 else
                 {
                     guildSettings.Active = false;
-                    await db.SaveChangesAsync();
                     await ctx.ReplyAsync("Leveling has been disabled on this server.");
                 }
                 break;
@@ -132,6 +146,8 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
                 await ctx.ReplyAsync("I do not understand what you're saying.");
                 break;
 
+        }
+        await db.SaveChangesAsync();
         }
 
     }
@@ -149,7 +165,8 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
 
                 var bitmap = SKBitmap.Decode(memStream);
                 return bitmap;
-            };
+            }
+            ;
         }
         catch
         {

@@ -1,10 +1,13 @@
 using Database;
 using Fluxify.Bot;
+using Prometheus;
 
 namespace Ledger.Services;
 
 public class LedgerAPIService
 {
+    private static readonly Histogram TaskDuration = Metrics.CreateHistogram(
+    "username_fetch", "Fetch username for dashboard");
     private readonly Bot _bot;
 
     public LedgerAPIService(Bot bot)
@@ -13,12 +16,16 @@ public class LedgerAPIService
     }
 
     public async Task<string> GetUserName(User user)
-    {   
-        var fluxer_user = await _bot.Rest.Users[(ulong)user.UserId].GetAsync();
-        if (fluxer_user == null)
+    {
+        using (TaskDuration.NewTimer())
         {
-            return user.UserId.ToString();
+
+            var fluxer_user = await _bot.Rest.Users[(ulong)user.UserId].GetAsync();
+            if (fluxer_user == null)
+            {
+                return user.UserId.ToString();
+            }
+            return fluxer_user!.Username;
         }
-        return fluxer_user!.Username;
     }
 }
