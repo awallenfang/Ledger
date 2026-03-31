@@ -18,6 +18,7 @@ services:
           initial_sync: true
     networks:
       - ledger
+      - grafana
   dashboard:
     build: 
       context: .
@@ -43,6 +44,7 @@ services:
     networks:
       - local
       - ledger
+      - grafana
   db:
     image: postgres:17
     restart: always
@@ -58,15 +60,18 @@ services:
       retries: 5
     networks:
       - ledger
-  # adminer:
-  #   image: adminer
-  #   restart: always
-  #   ports:
-  #     - "7070:8080"
-  #   networks:
-  #     - ledger
+      - grafana
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "7070:8080"
+    networks:
+      - ledger
 networks:
   local:
     external: true
   ledger:
     external: false
+  grafana:
+    external:  true
