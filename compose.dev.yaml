@@ -1,0 +1,77 @@
+services:
+  bot:
+    build: 
+      context: .
+      dockerfile: Ledger/Dockerfile.dev
+    
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    develop:
+      watch:
+        - action: sync
+          path: ./Ledger
+          target: /
+          initial_sync: true
+    networks:
+      - ledger
+      - grafana
+  dashboard:
+    build: 
+      context: .
+      dockerfile: Dashboard/Dockerfile.dev
+    restart: always
+    ports:
+        - "5248:5248"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_URLS=http://+:5248
+    develop:
+      watch:
+        - action: sync
+          path: ./Dashboard
+          target: /src/Dashboard
+        - action: sync
+          path: ./Database
+          target: /src/Database
+    networks:
+      - local
+      - ledger
+      - grafana
+  db:
+    image: postgres:17
+    restart: always
+    shm_size: 128mb
+    volumes:
+      - ./data/db:/var/lib/postgresql
+    env_file:
+        - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledger -d ledger"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ledger
+      - grafana
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "7070:8080"
+    networks:
+      - ledger
+networks:
+  local:
+    external: true
+  ledger:
+    external: false
+  grafana:
+    external:  true
