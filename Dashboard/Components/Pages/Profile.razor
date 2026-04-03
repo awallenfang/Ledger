@@ -1,6 +1,7 @@
 @page "/profile"
 @attribute [Authorize]
 @rendermode InteractiveServer
+@using Database
 @using Fluxify.Dto.OAuth2
 @using Fluxify.Rest
 @using Microsoft.AspNetCore.Authorization
@@ -11,6 +12,10 @@
 @inject GuildDbService guild_db
 <PageTitle>Profile Settings</PageTitle>
 <h3>Profile Settings</h3>
+@if (userGuilds != null) {
+    <h4>Tracked guilds</h4>
+    @userGuilds
+}
 @* 
 <p>Username: @User.FindFirstValue(ClaimTypes.Name)</p>
 <p>Email: @User.FindFirstValue(ClaimTypes.Email)</p>
@@ -23,6 +28,7 @@
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
     @* [PersistentState] *@
     public OAuth2MeResponse? Me { get; set; }
+    public List<XpGuildUserSettings>? userGuilds;
 
     protected override async Task OnInitializedAsync()
     {
@@ -43,7 +49,7 @@
             {
                 return;
             }
-            
+            userGuilds = await db.GetAllGuildUserSettings(userId);
             var dbUser = await guild_db.GetOrCreateUserAsync(userId);
             var settings = await db.GetOrCreateUserSettingsAsync(dbUser);
         

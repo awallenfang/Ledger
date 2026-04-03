@@ -17,7 +17,7 @@ public class PrefixService
         _scopeFactory = scopeFactory;
     }
 
-    public bool CheckPrefix(Message m)
+    public int? CheckPrefix(Message m)
     {
         using (TaskDuration.NewTimer())
         {
@@ -25,7 +25,13 @@ public class PrefixService
             var guildDb = scope.ServiceProvider.GetRequiredService<GuildDbService>();
             var guildId = m.Guild!.Id;
             var prefix = guildDb.GetPrefix((long)guildId);
-            return m.Author.Bot is not true && m.Content!.StartsWith(prefix);
+            if (m.Author.Bot is not true && m.Content!.StartsWith(prefix))
+            {
+                return prefix.Length;
+            } else
+            {
+                return null;
+            }
         }
         
     }

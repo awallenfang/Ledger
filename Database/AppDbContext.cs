@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<XpGuildSettings> XpGuildSettings { get; set; }
     public DbSet<XpUserSettings> XpUserSettings { get; set; }
+    public DbSet<XpGuildUserSettings> XpGuildUserSettings { get; set; }
     public DbSet<XpGuildUserRank> XpGuildUsers { get; set; }
     public DbSet<VoiceXpGuildUserRank> VCXpGuildUsers { get; set; }
     public DbSet<VoiceChatSession> VCSessions { get; set; }

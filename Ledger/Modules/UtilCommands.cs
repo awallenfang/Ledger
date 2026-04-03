@@ -24,8 +24,6 @@ public class UtilCommands(CommandContext ctx, GuildDbService guildDb)
 
     public async Task PrefixCommand()
     {
-        await ctx.ReplyAsync($"Sorry, this is currently disabled due to technical problems");
-        return;
         var parts = ctx.Message.Content!.Split(" ", 2);
         if (parts.Length < 2)
         {
@@ -34,17 +32,25 @@ public class UtilCommands(CommandContext ctx, GuildDbService guildDb)
         }
         var normalizedMessage = parts[1].ToLower().Trim();
 
-        if (normalizedMessage.Length > 0)
+        if (normalizedMessage.Contains(" "))
         {
-            await guildDb.UpdatePrefix(normalizedMessage, (long)ctx.Guild!.Id);
-            await ctx.ReplyAsync($"The prefix was updated to `{normalizedMessage}`");
+            await ctx.ReplyAsync($"The prefix was invalid and wasn't used");
             return;
-        }
-        else
+        } 
+        if (normalizedMessage.Length == 0)
         {
             await ctx.ReplyAsync($"The prefix was invalid and wasn't used");
             return;
         }
+        if (normalizedMessage == "reset")
+        {
+            await guildDb.UpdatePrefix("l!", (long)ctx.Guild!.Id);
+            await ctx.ReplyAsync($"The prefix was reset back to `l!`");
+            return;
+        }
+        await guildDb.UpdatePrefix(normalizedMessage, (long)ctx.Guild!.Id);
+        await ctx.ReplyAsync($"The prefix was updated to `{normalizedMessage}`");
+        return;
     }
 
 }

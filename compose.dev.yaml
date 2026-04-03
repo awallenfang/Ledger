@@ -14,8 +14,14 @@ services:
       watch:
         - action: sync
           path: ./Ledger
-          target: /
+          target: /src/Ledger
           initial_sync: true
+        - action: sync
+          path: ./Dashboard
+          target: /src/Dashboard
+        - action: sync
+          path: ./Database
+          target: /src/Database
     networks:
       - ledger
       - grafana

@@ -26,16 +26,16 @@ public class LeaderboardDbService
 
         var guild_settings = await GetOrCreateSettingsAsync(guild);
 
-        var ranks =  await _db.XpGuildUsers
+        var ranks = await _db.XpGuildUsers
         .Include(u => u.User)
             .ThenInclude(gu => gu.User)
         .Where(u => u.User.GuildId == guildId)
         .OrderByDescending(u => u.Exp)
         .Select(u => new LeaderboardEntry
-            {
-                User = u.User.User,
-                Exp = u.Exp
-            })
+        {
+            User = u.User.User,
+            Exp = u.Exp
+        })
         .Skip(page * pageSize)
             .Take(take)
         .ToListAsync();
@@ -49,16 +49,16 @@ public class LeaderboardDbService
 
         var guild_settings = await GetOrCreateSettingsAsync(guild);
 
-        var ranks =  await _db.VCXpGuildUsers
+        var ranks = await _db.VCXpGuildUsers
         .Include(u => u.User)
             .ThenInclude(gu => gu.User)
         .Where(u => u.User.GuildId == guildId)
         .OrderByDescending(u => u.Exp)
         .Select(u => new LeaderboardEntry
-            {
-                User = u.User.User,
-                Exp = u.Exp
-            })
+        {
+            User = u.User.User,
+            Exp = u.Exp
+        })
         .Skip(page * pageSize)
             .Take(take)
         .ToListAsync();
@@ -124,7 +124,7 @@ public class LeaderboardDbService
         var rank = await _db.XpGuildUsers
             .Where(u => u.User.Guild == guildUser.User.Guild && u.Exp > guildUser.Exp)
             .CountAsync();
-        
+
         return rank + 1;
     }
     public async Task<XpGuildSettings> GetOrCreateSettingsAsync(Guild guild)
@@ -141,7 +141,7 @@ public class LeaderboardDbService
         await _db.SaveChangesAsync();
         return settings;
     }
-        
+
 
     public async Task<XpGuildUserRank> GetOrCreateUserRankAsync(GuildUser guildUser)
     {
@@ -149,7 +149,7 @@ public class LeaderboardDbService
         ?? _db.XpGuildUsers.Add(new XpGuildUserRank { GuildUserId = guildUser.Id, User = guildUser, Exp = 0 }).Entity;
         await _db.SaveChangesAsync();
         return rank;
-        
+
     }
     public async Task<VoiceXpGuildUserRank> GetOrCreateUserVcRankAsync(GuildUser guildUser)
     {
@@ -157,19 +157,20 @@ public class LeaderboardDbService
                 ?? _db.VCXpGuildUsers.Add(new VoiceXpGuildUserRank { GuildUserId = guildUser.Id, User = guildUser, Exp = 0 }).Entity;
         await _db.SaveChangesAsync();
         return rank;
-        
+
     }
 
     public async Task UpdateVCSession(Snowflake userId, Snowflake guildId, bool inVc)
     {
-        var guildUser = await _db.GuildUsers.Where(u => (u.GuildId == (long)guildId) &&(u.UserId == (long) userId)).FirstOrDefaultAsync();
+        var guildUser = await _db.GuildUsers.Where(u => (u.GuildId == (long)guildId) && (u.UserId == (long)userId)).FirstOrDefaultAsync();
         if (guildUser == null) return;
         if (inVc)
         {
             var session = await _db.VCSessions.FirstOrDefaultAsync(s => s.User == guildUser)
                 ?? _db.VCSessions.Add(new VoiceChatSession { GuildUserId = guildUser.Id, User = guildUser }).Entity;
             session.LastTick = DateTime.Now;
-        } else
+        }
+        else
         {
             var session = await _db.VCSessions.FirstAsync(s => s.User == guildUser);
             _db.VCSessions.Remove(session);
@@ -185,6 +186,11 @@ public class LeaderboardDbService
             .Include(u => u.User)
             .ThenInclude(gu => gu.Guild)
             .ToListAsync();
+    }
+
+    public async Task<List<XpGuildUserSettings>> GetAllGuildUserSettings(long userId)
+    {
+        return await _db.XpGuildUserSettings.Include(u => u.User).Include(u => u.Guild).ToListAsync();
     }
 
 }

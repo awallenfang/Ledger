@@ -83,7 +83,7 @@ var host = Host.CreateDefaultBuilder(args)
                 GatewayConfig = sp.GetRequiredService<GatewayConfig>(),
                 CommandConfig =
                 {
-                    IsValidCommand = (m) => 
+                    DetermineCommandStart = (m) => 
                     {
                         using var scope = scopeFactory.CreateScope();
                         var prefixService = scope.ServiceProvider.GetRequiredService<PrefixService>();
