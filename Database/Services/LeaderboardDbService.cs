@@ -130,14 +130,14 @@ public class LeaderboardDbService
     public async Task<XpGuildSettings> GetOrCreateSettingsAsync(Guild guild)
     {
         var settings = await _db.XpGuildSettings.FirstOrDefaultAsync(s => s.Guild == guild)
-        ?? _db.XpGuildSettings.Add(new XpGuildSettings { Guild = guild, Active = false }).Entity;
+        ?? _db.XpGuildSettings.Add(new XpGuildSettings { Guild = guild, Active = true }).Entity;
         await _db.SaveChangesAsync();
         return settings;
     }
     public async Task<XpUserSettings> GetOrCreateUserSettingsAsync(User user)
     {
         var settings = await _db.XpUserSettings.FirstOrDefaultAsync(s => s.User == user)
-        ?? _db.XpUserSettings.Add(new XpUserSettings { User = user, Active = false, Global = false }).Entity;
+        ?? _db.XpUserSettings.Add(new XpUserSettings { User = user, Active = true, Global = false }).Entity;
         await _db.SaveChangesAsync();
         return settings;
     }
