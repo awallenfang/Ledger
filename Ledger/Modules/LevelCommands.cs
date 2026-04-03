@@ -56,32 +56,36 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
             }
 
             var guildId = (ulong)guildTextChannel.Guild.Id!;
+            
             var userId = (ulong)ctx.Message.Author.Id;
             // Fetch the corresponding database object and create it if it doesn't exist
             var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
-
+            var guildUser = (Fluxify.Application.Entities.Users.GuildUser) ctx.Message.Author;
             // Fetch the corresponding settings and create it if it doesn't exist
             var guildSettings = await leaderboardService.GetOrCreateSettingsAsync(guild);
 
             if (guildSettings.Active)
             {
                 var user = await guildService.GetOrCreateUserAsync((long)userId);
-                var guildUser = await guildService.GetOrCreateGuildUserAsync(guild, user);
-                var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUser);
-
-                var rankCardData = new RankCardData
+                var guildUserDb = await guildService.GetOrCreateGuildUserAsync(guild, user);
+                var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUserDb);
+                var VcUserXp = await leaderboardService.GetOrCreateUserVcRankAsync(guildUserDb);
+                var avatarHash = guildUser.GlobalAvatarHash;
+                Console.WriteLine(avatarHash);
+                Console.WriteLine($"https://fluxerusercontent.com/avatars/{userId}/{avatarHash}.webp");
+                var rankCardData = new RankCardData 
                 {
                     Username = ctx.Message.Author.Username,
                     Level = userXp.Level,
                     CurrentXp = userXp.Exp,
-                    Position = await leaderboardService.GetGuildRankAsync(userXp)
-                    // AvatarBitmap = LoadBitmapFromWebAsync(ctx.Message.Author.)
+                    Position = await leaderboardService.GetGuildRankAsync(userXp),
+                    AvatarBitmap = await LoadBitmapFromWebAsync($"https://fluxerusercontent.com/avatars/{userId}/{avatarHash}.webp")
                 };
                 var rankCard = rankCardService.GenerateRankCard(rankCardData);
 
                 var builder = new MessageBuilder()
                 .WithAttachment(rankCard, "rank.png", "image/png")
-            .WithContent($"Level {userXp.Level}, {userXp.Exp} Exp");
+            .WithContent($"Chat: Level {userXp.Level}, {userXp.Exp} Exp\nVoice: Level {VcUserXp.Level}, {VcUserXp.Exp} Exp");
 
                 await ctx.ReplyAsync(builder.Build());
             }

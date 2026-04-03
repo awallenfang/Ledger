@@ -11,7 +11,7 @@ public class RankCardService : IDisposable
 
     private SKPaint bgPaint = new SKPaint { Color = new SKColor(15, 8, 32), IsAntialias = true };
     private SKPaint bgAltPaint = new SKPaint { Color = new SKColor(28, 17, 51), IsAntialias = true };
-    private SKPaint accentPaint = new SKPaint { Color = new SKColor(183, 111, 255), IsAntialias = true };
+    private SKPaint accentPaint = new SKPaint { Color = new SKColor(80, 22, 68), IsAntialias = true };
     private SKPaint textPaint = new SKPaint { Color = new SKColor(255, 255, 255), IsAntialias = true };
     private SKRoundRect bgRect;
     private SKRoundRect barBgRect = new SKRoundRect(new SKRect(25, 155, 575, 175), 5);
@@ -33,7 +33,7 @@ public class RankCardService : IDisposable
         levelFont = new SKFont(montserrat, 24);
         expFont = new SKFont(montserrat, 18);
         rankFont = new SKFont(montserrat, 40);
-        avatarRect = new SKRect(profilePoint.X - 35, profilePoint.Y - 35, profilePoint.X + 35, profilePoint.Y + 35);
+        avatarRect = new SKRect(profilePoint.X - 45, profilePoint.Y - 45, profilePoint.X + 45, profilePoint.Y + 45);
     }
 
     public void Dispose()
@@ -48,7 +48,7 @@ public class RankCardService : IDisposable
         levelFont.Dispose();
         expFont.Dispose();
         rankFont.Dispose();
-        montserrat.Dispose();
+        // montserrat.Dispose();
     }
 
     public byte[] GenerateRankCard(RankCardData data)
@@ -67,11 +67,31 @@ public class RankCardService : IDisposable
             canvas.DrawText(data.Username, namePoint, SKTextAlign.Left, nameFont, textPaint);
             canvas.DrawText($"Level {data.Level}", levelPoint, SKTextAlign.Left, levelFont, textPaint);
             canvas.DrawText($"{data.CurrentXp % 100} / 100", expPoint, SKTextAlign.Center, expFont, textPaint);
-            canvas.DrawText($"#{data.Position}", rankPoint, SKTextAlign.Left, rankFont, accentPaint);
+            canvas.DrawText($"#{data.Position}", rankPoint, SKTextAlign.Left, rankFont, textPaint);
             if (data.AvatarBitmap is not null)
             {
+                var cropped_size = Math.Min(data.AvatarBitmap.Width, data.AvatarBitmap.Height);
+                var xOffset = data.AvatarBitmap.Width - cropped_size;
+                var yOffset = data.AvatarBitmap.Height - cropped_size;
+                var cropped = new SKBitmap(cropped_size, cropped_size);
+                data.AvatarBitmap.ExtractSubset(cropped, new SKRectI(xOffset, yOffset, xOffset + cropped_size, yOffset + cropped_size));
                 canvas.DrawCircle(profilePoint, 50, accentPaint);
-                canvas.DrawBitmap(data.AvatarBitmap, avatarRect);
+
+                float scale = avatarRect.Width / (float)cropped_size;
+
+                var matrix = SKMatrix.CreateTranslation(avatarRect.Left, avatarRect.Top);
+                matrix = SKMatrix.Concat(matrix, SKMatrix.CreateScale(scale, scale));
+
+                using (var paint = new SKPaint())
+                using (var shader = SKShader.CreateBitmap(cropped, SKShaderTileMode.Clamp, SKShaderTileMode.Clamp, matrix))
+                {
+                    paint.Shader = shader;
+                    paint.IsAntialias = true;
+
+                    float cornerRadius = 100f; 
+
+                    canvas.DrawRoundRect(avatarRect, cornerRadius, cornerRadius, paint);
+                }
 
             }
 

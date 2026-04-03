@@ -1,4 +1,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+RUN apt-get update && apt-get install -y \
+    libfontconfig1 \
+    libfreetype6 \
+    libpng16-16 \
+    libgl1 \
+    libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
 COPY ["Ledger/Ledger.csproj", "Ledger/"]
 COPY ["Dashboard/Dashboard.csproj", "Dashboard/"]
