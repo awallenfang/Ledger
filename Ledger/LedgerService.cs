@@ -109,7 +109,7 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
         var user = await guildDb.GetOrCreateUserAsync((long)memberId);
         var guildSettings = await leaderboardDb.GetOrCreateSettingsAsync(guild);
         var guildUser = await guildDb.GetOrCreateGuildUserAsync(guild, user);
-        var userSettings = await leaerboardDb.GetOrCreateXpGuildUserSettings(guildUser);
+        var userSettings = await leaderboardDb.GetOrCreateXpGuildUserSettings(guildUser);
         if (guildSettings.Active && userSettings.Active)
         {
             await leaderboardDb.UpdateVCSession(memberId, (Snowflake)guildId, inVc);
