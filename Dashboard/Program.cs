@@ -3,6 +3,7 @@ using Database;
 using Database.Services;
 using Microsoft.EntityFrameworkCore;
 using Fluxify.Core;
+using Fluxify.Bot;
 using Fluxify.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
@@ -87,6 +88,11 @@ builder.Services.AddAuthentication(options =>
         o.SaveTokens = true;
     })
     .AddCookie();
+    var config = new BotConfig("l!")
+        {
+            Credentials = new BotTokenCredentials(token),
+        };
+builder.Services.AddSingleton(sp => new Bot(config));
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthorization();
 builder.Services.AddDbContext<AppDbContext>(options =>

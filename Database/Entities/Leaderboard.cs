@@ -34,13 +34,11 @@ public class XpGuildUserSettings
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long Id {get; set;}
-    public long UserId { get; set; }
-    public long GuildId { get; set; }
-    [ForeignKey("GuildId")]
-    public required Guild Guild { get; set;}
-    [ForeignKey("UserId")]
-    public required User User { get; set;}
-    public bool Active {get; set;} = false;
+    public required long GuildUserId { get; set;}
+    [ForeignKey("GuildUserId")]
+    public required GuildUser User {get; set;}
+    public bool Active {get; set;} = true;
+    public bool Leaderboard {get; set;} = true;
 }
 
 public class XpGuildUserRank

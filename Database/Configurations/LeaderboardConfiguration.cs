@@ -28,12 +28,9 @@ public class XpGuildUserSettingsConfiguration : IEntityTypeConfiguration<XpGuild
     public void Configure(EntityTypeBuilder<XpGuildUserSettings> builder)
     {
         builder.HasKey(e => e.Id);
-        builder.HasOne(e => e.Guild)
-               .WithMany()
-               .HasForeignKey(e => e.GuildId);
         builder.HasOne(e => e.User)
                .WithMany()
-               .HasForeignKey(e => e.UserId);
+               .HasForeignKey(e => e.GuildUserId);
     }
 }
 

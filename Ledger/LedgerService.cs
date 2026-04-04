@@ -80,11 +80,13 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
         var guild = await guildService.GetOrCreateGuildAsync(guildId);
         var guildSettings = await leaderboardService.GetOrCreateSettingsAsync(guild);
 
-
         if (!guildSettings.Active) { await db.SaveChangesAsync(); return; }
+
         var user = await guildService.GetOrCreateUserAsync(userId);
-        var userSettings = await leaderboardService.GetOrCreateUserSettingsAsync(user);
+        // var userSettings = await leaderboardService.GetOrCreateUserSettingsAsync(user);
         var guildUser = await guildService.GetOrCreateGuildUserAsync(guild, user);
+        var guildUserSettings = await leaderboardService.GetOrCreateXpGuildUserSettings(guildUser);
+        if (!guildUserSettings.Active) {await db.SaveChangesAsync();return;}
         var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUser);
         await db.SaveChangesAsync();
         if (userXp.IsOnCooldown) return;
@@ -104,8 +106,11 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
         var inVc = response.ChannelId is not null;
 
         var guild = await guildDb.GetOrCreateGuildAsync((long)guildId);
+        var user = await guildDb.GetOrCreateUserAsync((long)memberId);
         var guildSettings = await leaderboardDb.GetOrCreateSettingsAsync(guild);
-        if (guildSettings.Active)
+        var guildUser = await guildDb.GetOrCreateGuildUserAsync(guild, user);
+        var userSettings = await leaerboardDb.GetOrCreateXpGuildUserSettings(guildUser);
+        if (guildSettings.Active && userSettings.Active)
         {
             await leaderboardDb.UpdateVCSession(memberId, (Snowflake)guildId, inVc);
             

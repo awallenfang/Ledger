@@ -30,6 +30,8 @@ public class LeaderboardDbService
         .Include(u => u.User)
             .ThenInclude(gu => gu.User)
         .Where(u => u.User.GuildId == guildId)
+        .Where(u => _db.XpGuildUserSettings
+                .Any(s => s.User == u.User && s.Active == true))
         .OrderByDescending(u => u.Exp)
         .Select(u => new LeaderboardEntry
         {
@@ -53,15 +55,17 @@ public class LeaderboardDbService
         .Include(u => u.User)
             .ThenInclude(gu => gu.User)
         .Where(u => u.User.GuildId == guildId)
+        .Where(u => _db.XpGuildUserSettings
+                .Any(s => s.User == u.User && s.Active == true))
         .OrderByDescending(u => u.Exp)
         .Select(u => new LeaderboardEntry
         {
             User = u.User.User,
             Exp = u.Exp
-        })
+        }) 
         .Skip(page * pageSize)
             .Take(take)
-        .ToListAsync();
+        .ToListAsync(); 
 
         return ranks;
     }
@@ -123,6 +127,8 @@ public class LeaderboardDbService
     {
         var rank = await _db.XpGuildUsers
             .Where(u => u.User.Guild == guildUser.User.Guild && u.Exp > guildUser.Exp)
+            .Where(u => _db.XpGuildUserSettings
+                .Any(s => s.User == u.User && s.Leaderboard == true))
             .CountAsync();
 
         return rank + 1;
@@ -188,9 +194,45 @@ public class LeaderboardDbService
             .ToListAsync();
     }
 
-    public async Task<List<XpGuildUserSettings>> GetAllGuildUserSettings(long userId)
-    {
-        return await _db.XpGuildUserSettings.Include(u => u.User).Include(u => u.Guild).ToListAsync();
+    public async Task<XpGuildUserSettings> GetOrCreateXpGuildUserSettings(GuildUser guildUser) {
+        var user = await _db.XpGuildUserSettings.FirstOrDefaultAsync(s => s.User == guildUser)
+                ?? _db.XpGuildUserSettings.Add(new XpGuildUserSettings { GuildUserId = guildUser.Id, User = guildUser, Active = true, Leaderboard = true }).Entity;
+        await _db.SaveChangesAsync();
+        return user;
     }
 
+    public async Task<List<XpGuildUserSettings>> GetAllGuildUserSettings(long userId)
+    {
+        return await _db.XpGuildUserSettings.Include(u => u.User).ThenInclude(gu => gu.Guild).ToListAsync();
+    }
+
+
+    public async Task<XpGuildUserSettings> UpdateGuildUserSettings(long userId, long guildId, bool active, bool leaderboard) {
+        var guildUser = await _db.GuildUsers.FirstOrDefaultAsync(u => u.User.UserId == userId && u.Guild.GuildId == guildId);
+        if (guildUser is null) throw new InvalidOperationException($"User {userId} not found.");
+        var settings = await _db.XpGuildUserSettings
+            .FirstOrDefaultAsync(s => s.User == guildUser);
+
+        if (settings is null)
+        {
+            settings = new XpGuildUserSettings
+            {
+                User = guildUser,
+                GuildUserId = guildUser.Id,
+                Active = active,
+                Leaderboard = leaderboard
+            };
+            _db.XpGuildUserSettings.Add(settings);
+        }
+        else
+        {
+            settings.Active = active;
+            settings.Leaderboard = leaderboard;
+        }
+
+        var rows = await _db.SaveChangesAsync();
+
+        return settings;
+
+    }
 }

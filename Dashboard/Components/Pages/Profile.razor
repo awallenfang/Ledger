@@ -10,25 +10,16 @@
 @using Microsoft.Extensions.Configuration.UserSecrets
 @inject LeaderboardDbService db
 @inject GuildDbService guild_db
+@inject Bot bot
 <PageTitle>Profile Settings</PageTitle>
 <h3>Profile Settings</h3>
-@if (userGuilds != null) {
-    <h4>Tracked guilds</h4>
-    @userGuilds
-}
-@* 
-<p>Username: @User.FindFirstValue(ClaimTypes.Name)</p>
-<p>Email: @User.FindFirstValue(ClaimTypes.Email)</p>
-<p>Global name: @User.FindFirstValue("fluxer:global_name")</p>
 
-<a href="/logout" class="btn btn-secondary">Logout</a> *@
 
 @code {
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
-    @* [PersistentState] *@
     public OAuth2MeResponse? Me { get; set; }
-    public List<XpGuildUserSettings>? userGuilds;
+    public List<TrackedGuild> trackedGuilds = new List<TrackedGuild>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -49,7 +40,6 @@
             {
                 return;
             }
-            userGuilds = await db.GetAllGuildUserSettings(userId);
             var dbUser = await guild_db.GetOrCreateUserAsync(userId);
             var settings = await db.GetOrCreateUserSettingsAsync(dbUser);
         
@@ -57,6 +47,29 @@
             {
                 model.Global = settings.Global;
             }
+            var userGuildSettings = await db.GetAllGuildUserSettings(userId);
+            foreach (var userSettings in userGuildSettings) {
+                var guild = await bot.Rest.Guilds[userSettings.User.Guild.GuildId].GetAsync();
+                var dbGuild = await guild_db.GetOrCreateGuildAsync(userSettings.User.Guild.GuildId);
+                var guildUser = await guild_db.GetOrCreateGuildUserAsync(dbGuild, dbUser);
+                var guildRank = await db.GetOrCreateUserRankAsync(guildUser);
+                var position = await db.GetGuildRankAsync(guildRank);
+                trackedGuilds.Add(
+                    new TrackedGuild {
+                        ID=userSettings.User.Guild.GuildId,
+                        Active=userSettings.Active,
+                        Leaderboard=userSettings.Leaderboard,
+                        Name=guild.Name,
+                        IconURL=$"https://fluxerusercontent.com/icons/{guild.Id}/{guild.IconHash}.webp",
+                        Exp=guildRank.Exp,
+                        Level=guildRank.Level,
+                        Position=position
+                    }
+                );
+            }
+
+            model.Guilds.Clear();
+            model.Guilds = trackedGuilds;
         }
         catch (Fluxify.Rest.RestApiException ex)
         {
@@ -91,6 +104,11 @@
                 if (long.TryParse(userIdString, out long userId))
                 {
                     await db.UpdateUserSettings(userId, model!.Global);
+                    foreach (var guild in model.Guilds)
+                    {
+                        // Assuming you have a method to update specific guild settings
+                        await db.UpdateGuildUserSettings(userId, guild.ID, guild.Active, guild.Leaderboard);
+                    }
                     _ = ShowSuccessMessage();   
                 }
             }
@@ -117,6 +135,19 @@
     {
         
         public bool Global { get; set; }
+        public List<TrackedGuild> Guilds { get; set; } = new();
+    }
+
+    public class TrackedGuild
+    {
+        public string Name { get; set; }
+        public string IconURL { get; set; }
+        public bool Active { get; set; }
+        public bool Leaderboard { get; set; }
+        public long ID {get; set; }
+        public long Level { get; set; }
+        public long Position { get; set; }
+        public long Exp { get; set; }
     }
 }
 
@@ -147,7 +178,30 @@ else
 {
     <EditForm Model="model" OnValidSubmit="Submit" FormName="Starship2">
         <DataAnnotationsValidator />
+        <h4>Tracked Guilds</h4>
+    @foreach (var guild in model.Guilds)
+    {
+        <div class="card w-100 mb-2"> 
+            <h5 class="card-header">
+                <img class="rounded me-1" src="@guild.IconURL" width=30 height=30>
+                @guild.Name
+                <div class="float-end">#@guild.Position, Level: @guild.Level</div>
+            </h5>
+            <div class="card-body">
+                <div class="form-check">
+                    <InputCheckbox @bind-Value="guild.Active" class="form-check-input" id="@($"check-{guild.ID}-active")" />
+                    <label class="form-check-label" for="@($"check-{guild.ID}-active")">Tracking Exp</label>
+                </div> 
+                <div class="form-check">
+                    <InputCheckbox @bind-Value="guild.Leaderboard" class="form-check-input" id="@($"check-{guild.ID}-leaderboard")" />
+                    <label class="form-check-label" for="@($"check-{guild.ID}-leaderboard")">Show on guild leaderboard</label>
+                </div>
+            </div>
+        </div>
+    }
+    <hr />
         <ValidationSummary />
+        <h4>General Settings</h4>
         <div class="form-group mt-3">
             <InputCheckbox @bind-Value="model!.Global" class="form-check-input" id="globalCheck" />
             <label class="form-label" for="globalCheck">Show rank on global leaderboards</label>
