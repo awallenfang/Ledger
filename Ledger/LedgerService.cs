@@ -54,7 +54,7 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
             .Command("rank", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).RankCommand())
             .Command("xp", (CommandContext ctx) => ProvideModule<LevelCommands>(ctx).XpCommand(), Preconditions.RequireAuthorPermissions(Permissions.Administrator))
             .Command("prefix", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).PrefixCommand(), Preconditions.RequireAuthorPermissions(Permissions.Administrator))
-            .Command("help", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).HelpCommand());  
+            .Command("help", (CommandContext ctx) => ProvideModule<UtilCommands>(ctx).HelpCommand());
         // using(var scope = serviceProvider.CreateScope())
         // {
         //     await prefixService.InitAsync(scope.ServiceProvider.GetRequiredService<GuildDbService>());
@@ -68,7 +68,7 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
         if (message.Content?.Length <= 5) return;
         // Check if this even is a guild
         if (message.Channel is not GuildTextChannel guildTextChannel) return;
-        if (message is {Author.Bot: true}) return;
+        if (message is { Author.Bot: true }) return;
         using var scope = ServiceLocator.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var guildService = scope.ServiceProvider.GetRequiredService<GuildDbService>();
@@ -86,7 +86,7 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
         // var userSettings = await leaderboardService.GetOrCreateUserSettingsAsync(user);
         var guildUser = await guildService.GetOrCreateGuildUserAsync(guild, user);
         var guildUserSettings = await leaderboardService.GetOrCreateXpGuildUserSettings(guildUser);
-        if (!guildUserSettings.Active) {await db.SaveChangesAsync();return;}
+        if (!guildUserSettings.Active) { await db.SaveChangesAsync(); return; }
         var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUser);
         await db.SaveChangesAsync();
         if (userXp.IsOnCooldown) return;
@@ -113,8 +113,9 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
         if (guildSettings.Active && userSettings.Active)
         {
             await leaderboardDb.UpdateVCSession(memberId, (Snowflake)guildId, inVc);
-            
-        } else
+
+        }
+        else
         {
             // Disable any still existing sessions
             // TODO: Overkill, optimize this

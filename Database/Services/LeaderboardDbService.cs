@@ -152,7 +152,7 @@ public class LeaderboardDbService
     public async Task<XpGuildUserRank> GetOrCreateUserRankAsync(GuildUser guildUser)
     {
         var rank = await _db.XpGuildUsers.FirstOrDefaultAsync(u => u.User == guildUser)
-        ?? _db.XpGuildUsers.Add(new XpGuildUserRank { GuildUserId = guildUser.Id, User = guildUser, Exp = 0 }).Entity;
+        ?? _db.XpGuildUsers.Add(new XpGuildUserRank { GuildUserId = guildUser.Id, User = guildUser, Exp = Random.Shared.Next(15, 25) }).Entity;
         await _db.SaveChangesAsync();
         return rank;
 

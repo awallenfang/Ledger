@@ -41,7 +41,8 @@ else
             {
                 <tr>
                     <td>#@user.Position</td>
-                    <td>@user.Name</td>
+                    <td>@if (user.AvatarURL!= null){
+                        <div class="center-cropped" style="background-image: url('@user.AvatarURL')"></div>}@user.Name</td>
                     <td>@user.CurrentLevel</td>
                     <td>@user.Exp</td>
                     <td>
@@ -92,6 +93,7 @@ else
             var fluxerUser = await rest.Users[user.User.UserId].GetAsync();
             if (fluxerUser is not null)
             {
+                var url = $"https://fluxerusercontent.com/avatars/{user.User.UserId}/{fluxerUser.Avatar}.webp" ?? null;
                 actual_users.Add(
                     new User
                     {
@@ -99,6 +101,7 @@ else
                         Exp = user.Exp,
                         CurrentLevel = user.Level,
                         Position = idx,
+                        AvatarURL = url
                     }
                 );
 
@@ -115,5 +118,6 @@ else
         public int Exp { get; set; }
         public int CurrentLevel { get; set; }
         public int Position { get; set; }
+        public string? AvatarURL { get; set; }
     }
 }
