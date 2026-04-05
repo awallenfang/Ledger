@@ -68,10 +68,14 @@ public class XpGuildUserRank
 
     public void AddExp(XpGuildSettings settings)
     {
+        if (!IsOnCooldown(60))
+        {
+            Messages += 1;
+        }
         if (!IsOnCooldown(settings.Cooldown))
         {
             Exp += Random.Shared.Next(settings.ExpMin, settings.ExpMax);
-            Messages += 1;
+            
             LastExp = DateTime.UtcNow;
         }
     }

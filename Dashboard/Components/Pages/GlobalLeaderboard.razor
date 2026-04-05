@@ -29,7 +29,7 @@ else
                 <td>Position</td>
                 <td>Name</td>
                 <td>Level</td>
-                <td>Exp</td>
+                <td>Messages</td>
                 <td class="d-none d-md-table-cell"></td>
             </tr>
         </thead>
@@ -40,23 +40,7 @@ else
                     <td>@user.Position</td>
                     <td>@user.Name</td>
                     <td>@user.CurrentLevel</td>
-                    <td>@user.Exp</td>
-                    <td class="d-none d-md-table-cell">
-                        <div style="width: 10rem; background: var(--bs-body-bg-alt); border-radius: 4px;">
-                            <div
-                                style="width: @((user.Exp % 100) / 2.0)%; background: var(--bs-primary); height: 10px; border-radius: 4px;">
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-                <tr class="d-table-row d-md-none">
-                    <td colspan="4" class="pt-2">
-                        <div style="width: 100%; background: var(--bs-body-bg-alt); border-radius: 4px;">
-                            <div
-                                style="width: @((user.Exp % 100) / 2.0)%; background: var(--bs-primary); height: 10px; border-radius: 4px;">
-                            </div>
-                        </div>
-                    </td>
+                    <td>@user.Messages</td>
                 </tr>
             }
         </tbody>
@@ -95,7 +79,7 @@ else
                 actual_users.Add(new User
                 {
                     Name = fluxerUser.Username,
-                    Exp = user.Exp,
+                    Messages = user.Messages,
                     CurrentLevel = user.Level,
                     Position = idx++
                 });
@@ -105,7 +89,7 @@ else
                 actual_users.Add(new User
                 {
                     Name = "Unknown User",
-                    Exp = user.Exp,
+                    Messages = user.Messages,
                     CurrentLevel = user.Level,
                     Position = idx++
                 });
@@ -118,7 +102,7 @@ else
     private class User
     {
         public string Name { get; set; }
-        public int Exp { get; set; }
+        public long Messages { get; set; }
         public int CurrentLevel { get; set; }
         public int Position { get; set; }
     }
