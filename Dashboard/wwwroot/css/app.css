@@ -82,8 +82,8 @@
   --bs-body-line-height: 1.5;
   --bs-body-color: #F0E8FF;
   --bs-body-color-rgb: 240, 232, 255;
-  --bs-body-bg: rgb(20, 7, 26);
-  --bs-body-bg-rgb: 20, 7, 26;
+  --bs-body-bg: rgb(13, 5, 17);
+  --bs-body-bg-rgb: 13, 5, 17;
   --bs-emphasis-color: #000;
   --bs-emphasis-color-rgb: 0, 0, 0;
   --bs-secondary-color: rgba(240, 232, 255, 0.75);
@@ -1860,7 +1860,7 @@ progress {
   --bs-table-color-state: initial;
   --bs-table-bg-state: initial;
   --bs-table-color: var(--bs-emphasis-color);
-  --bs-table-bg: rgb(20, 7, 26);
+  --bs-table-bg: rgb(13, 5, 17);
   --bs-table-border-color: var(--bs-border-color);
   --bs-table-accent-bg: transparent;
   --bs-table-striped-color: var(--bs-emphasis-color);
@@ -2462,10 +2462,10 @@ textarea.form-control-lg {
   outline: 0;
 }
 .form-range:focus::-webkit-slider-thumb {
-  box-shadow: 0 0 0 1px rgb(20, 7, 26), 0 0 0 0.25rem rgba(80, 22, 68, 0.25);
+  box-shadow: 0 0 0 1px rgb(13, 5, 17), 0 0 0 0.25rem rgba(80, 22, 68, 0.25);
 }
 .form-range:focus::-moz-range-thumb {
-  box-shadow: 0 0 0 1px rgb(20, 7, 26), 0 0 0 0.25rem rgba(80, 22, 68, 0.25);
+  box-shadow: 0 0 0 1px rgb(13, 5, 17), 0 0 0 0.25rem rgba(80, 22, 68, 0.25);
 }
 .form-range::-moz-focus-outer {
   border: 0;
@@ -11983,5 +11983,22 @@ textarea.form-control-lg {
 }
 
 body {
-  background-color: rgb(20, 7, 26);
+  background-color: rgb(13, 5, 17);
+}
+
+@keyframes drift {
+  from {
+    transform: scale(1) translateY(0px);
+  }
+  to {
+    transform: scale(1.05) translateY(-12px);
+  }
+}
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }

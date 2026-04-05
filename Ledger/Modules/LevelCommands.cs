@@ -56,11 +56,11 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
             }
 
             var guildId = (ulong)guildTextChannel.Guild.Id!;
-            
+
             var userId = (ulong)ctx.Message.Author.Id;
             // Fetch the corresponding database object and create it if it doesn't exist
             var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
-            var guildUser = (Fluxify.Application.Entities.Users.GuildMember) ctx.Message.Author;
+            var guildUser = (Fluxify.Application.Entities.Users.GuildMember)ctx.Message.Author;
             // Fetch the corresponding settings and create it if it doesn't exist
             var guildSettings = await leaderboardService.GetOrCreateSettingsAsync(guild);
 
@@ -70,7 +70,7 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
                 var guildUserDb = await guildService.GetOrCreateGuildUserAsync(guild, user);
                 var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUserDb);
                 var VcUserXp = await leaderboardService.GetOrCreateUserVcRankAsync(guildUserDb);
-                var rankCardData = new RankCardData 
+                var rankCardData = new RankCardData
                 {
                     Username = ctx.Message.Author.Username,
                     Level = userXp.Level,
@@ -100,55 +100,113 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
     {
         using (XpDuration.NewTimer())
         {
-            
-        var parts = ctx.Message.Content.Split(" ", 2);
-        if (parts.Length < 2)
-        {
-            await ctx.ReplyAsync("Usage: !xp <on|off|init>");
-            return;
-        }
-        var normalizedMessage = parts[1].ToLower().Trim();
 
-        if (ctx.Message.Channel is not GuildTextChannel guildTextChannel)
-        {
-            throw new CommandException("This seems to not be a guild, so leveling is disabled.");
-        }
+            var parts = ctx.Message.Content.Split(" ", 3);
+            if (parts.Length < 2)
+            {
+                await ctx.ReplyAsync("Usage: !xp <on|off|init|cooldown|expmin|expmax>");
+                return;
+            }
+            var normalizedMessage = parts[1].ToLower().Trim();
 
-        var guildId = (ulong)guildTextChannel.Guild.Id!;
-        // Fetch the corresponding database object and create it if it doesn't exist
-        var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
+            if (ctx.Message.Channel is not GuildTextChannel guildTextChannel)
+            {
+                throw new CommandException("This seems to not be a guild, so leveling is disabled.");
+            }
 
-        // Fetch the corresponding settings and create it if it doesn't exist
-        var guildSettings = await leaderboardService.GetOrCreateSettingsAsync(guild);
+            var guildId = (ulong)guildTextChannel.Guild.Id!;
+            // Fetch the corresponding database object and create it if it doesn't exist
+            var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
 
-        switch (normalizedMessage)
-        {
-            case "init":
-            case "on":
-                if (guildSettings.Active)
-                    await ctx.ReplyAsync("Leveling is already enabled on this server.");
-                else
-                {
-                    guildSettings.Active = true;
-                    await ctx.ReplyAsync("Leveling has been enabled on this server.");
+            // Fetch the corresponding settings and create it if it doesn't exist
+            var guildSettings = await leaderboardService.GetOrCreateSettingsAsync(guild);
 
-                }
-                break;
-            case "off":
-                if (!guildSettings.Active)
-                    await ctx.ReplyAsync("Leveling is already disabled.");
-                else
-                {
-                    guildSettings.Active = false;
-                    await ctx.ReplyAsync("Leveling has been disabled on this server.");
-                }
-                break;
-            default:
-                await ctx.ReplyAsync("I do not understand what you're saying.");
-                break;
+            switch (normalizedMessage)
+            {
+                case "init":
+                case "on":
+                    if (guildSettings.Active)
+                        await ctx.ReplyAsync("Leveling is already enabled on this server.");
+                    else
+                    {
+                        guildSettings.Active = true;
+                        await ctx.ReplyAsync("Leveling has been enabled on this server.");
 
-        }
-        await db.SaveChangesAsync();
+                    }
+                    break;
+                case "off":
+                    if (!guildSettings.Active)
+                        await ctx.ReplyAsync("Leveling is already disabled.");
+                    else
+                    {
+                        guildSettings.Active = false;
+                        await ctx.ReplyAsync("Leveling has been disabled on this server.");
+                    }
+                    break;
+                case "cooldown":
+                    {
+                        if (parts.Length < 3)
+                        {
+                            await ctx.ReplyAsync($"Current cooldown: {guildSettings.Cooldown}s\nUsage: !xp cooldown <seconds>");
+                            break;
+                        }
+                        if (!long.TryParse(parts[2].Trim(), out var cooldown) || cooldown < 0)
+                        {
+                            await ctx.ReplyAsync("Cooldown must be a positive number of seconds.");
+                            break;
+                        } 
+                        guildSettings.Cooldown = cooldown;
+                        await ctx.ReplyAsync($"Cooldown set to {cooldown} seconds.");
+                        break;
+                    }
+                case "expmin":
+                    {
+                        if (parts.Length < 3)
+                        {
+                            await ctx.ReplyAsync($"Current max exp: {guildSettings.ExpMin}\nUsage: !xp expmin <amount>");
+                            break;
+                        }
+                        if (!long.TryParse(parts[2].Trim(), out var expMin) || expMin < 0)
+                        {
+                            await ctx.ReplyAsync("Minimum exp must be a positive number.");
+                            break;
+                        }
+                        if (expMin > guildSettings.ExpMax)
+                        {
+                            await ctx.ReplyAsync($"Minimum exp cannot be greater than the current maximum ({guildSettings.ExpMax}).");
+                            break;
+                        }
+                        guildSettings.ExpMin = (int)expMin;
+                        await ctx.ReplyAsync($"Minimum exp set to {expMin}.");
+                        break;
+                    }
+                case "expmax":
+                    {
+                        if (parts.Length < 3)
+                        {
+                            await ctx.ReplyAsync($"Current max exp: {guildSettings.ExpMax}\nUsage: !xp expmax <amount>");
+                            break;
+                        }
+                        if (!long.TryParse(parts[2].Trim(), out var expMax) || expMax < 0)
+                        {
+                            await ctx.ReplyAsync("Maximum exp must be a positive number.");
+                            break;
+                        }
+                        if (expMax < guildSettings.ExpMin)
+                        {
+                            await ctx.ReplyAsync($"Maximum exp cannot be less than the current minimum ({guildSettings.ExpMin}).");
+                            break;
+                        }
+                        guildSettings.ExpMax = (int)expMax;
+                        await ctx.ReplyAsync($"Maximum exp set to {expMax}.");
+                        break;
+                    }
+                default:
+                    await ctx.ReplyAsync("I do not understand what you're saying.");
+                    break;
+
+            }
+            await db.SaveChangesAsync();
         }
 
     }

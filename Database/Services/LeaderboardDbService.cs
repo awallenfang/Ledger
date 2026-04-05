@@ -8,6 +8,7 @@ public class LeaderboardEntry
     public required User User { get; set; }
     public int Exp { get; set; }
     public int Level => (int)(Exp / 100.0) + 1;
+    public long Messages { get; set; }
 }
 
 public class LeaderboardDbService
@@ -62,10 +63,10 @@ public class LeaderboardDbService
         {
             User = u.User.User,
             Exp = u.Exp
-        }) 
+        })
         .Skip(page * pageSize)
             .Take(take)
-        .ToListAsync(); 
+        .ToListAsync();
 
         return ranks;
     }
@@ -85,9 +86,10 @@ public class LeaderboardDbService
             .Select(g => new LeaderboardEntry
             {
                 User = g.First().User.User,
-                Exp = g.Sum(u => u.Exp)
+                Exp = g.Sum(u => u.Exp),
+                Messages = g.Sum(u => u.Messages)
             })
-            .OrderByDescending(e => e.Exp)
+            .OrderByDescending(e => e.Messages)
             .Skip(page * pageSize)
             .Take(take)
             .ToList();
@@ -194,7 +196,8 @@ public class LeaderboardDbService
             .ToListAsync();
     }
 
-    public async Task<XpGuildUserSettings> GetOrCreateXpGuildUserSettings(GuildUser guildUser) {
+    public async Task<XpGuildUserSettings> GetOrCreateXpGuildUserSettings(GuildUser guildUser)
+    {
         var user = await _db.XpGuildUserSettings.FirstOrDefaultAsync(s => s.User == guildUser)
                 ?? _db.XpGuildUserSettings.Add(new XpGuildUserSettings { GuildUserId = guildUser.Id, User = guildUser, Active = true, Leaderboard = true }).Entity;
         await _db.SaveChangesAsync();
@@ -207,7 +210,8 @@ public class LeaderboardDbService
     }
 
 
-    public async Task<XpGuildUserSettings> UpdateGuildUserSettings(long userId, long guildId, bool active, bool leaderboard) {
+    public async Task<XpGuildUserSettings> UpdateGuildUserSettings(long userId, long guildId, bool active, bool leaderboard)
+    {
         var guildUser = await _db.GuildUsers.FirstOrDefaultAsync(u => u.User.UserId == userId && u.Guild.GuildId == guildId);
         if (guildUser is null) throw new InvalidOperationException($"User {userId} not found.");
         var settings = await _db.XpGuildUserSettings

@@ -10,6 +10,9 @@ public class XpGuildSettingsConfiguration : IEntityTypeConfiguration<XpGuildSett
         builder.HasOne(e => e.Guild)
                .WithMany()
                .HasForeignKey(e => e.GuildId);
+        builder.Property(e => e.ExpMin).HasDefaultValue(15);
+        builder.Property(e => e.ExpMax).HasDefaultValue(25);
+        builder.Property(e => e.Cooldown).HasDefaultValue(60);
     }
 }
 public class XpUserSettingsConfiguration : IEntityTypeConfiguration<XpUserSettings>

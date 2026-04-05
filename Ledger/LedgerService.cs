@@ -89,8 +89,8 @@ public class LedgerService(Bot bot, IConfiguration config, ILogger<LedgerService
         if (!guildUserSettings.Active) { await db.SaveChangesAsync(); return; }
         var userXp = await leaderboardService.GetOrCreateUserRankAsync(guildUser);
         await db.SaveChangesAsync();
-        if (userXp.IsOnCooldown) return;
-        userXp.AddExp();
+        if (userXp.IsOnCooldown(guildSettings.Cooldown)) return;
+        userXp.AddExp(guildSettings);
 
         await db.SaveChangesAsync();
     }
