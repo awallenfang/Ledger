@@ -55,10 +55,11 @@ public class RankCardService : IDisposable
     {
         using (TaskDuration.NewTimer())
         {
-
-            using var barRect = new SKRoundRect(new SKRect(30, 160, 30 + 540 * ((float)(data.CurrentXp % 100) / (float)100), 170), 5);
+            var bar_percentage = (float)(data.CurrentXp - data.PrevLevel) / (float)(data.CurrentXp + data.NextLevel - data.PrevLevel);
+            using var barRect = new SKRoundRect(new SKRect(30, 160, 30 + 540 * bar_percentage, 170), 5);
             var imageInfo = new SKImageInfo(Width, Height);
             using var surface = SKSurface.Create(imageInfo);
+
 
             var canvas = surface.Canvas;
             canvas.DrawRoundRect(bgRect, bgPaint);
@@ -66,7 +67,7 @@ public class RankCardService : IDisposable
             canvas.DrawRoundRect(barRect, accentPaint);
             canvas.DrawText(data.Username, namePoint, SKTextAlign.Left, nameFont, textPaint);
             canvas.DrawText($"Level {data.Level}", levelPoint, SKTextAlign.Left, levelFont, textPaint);
-            canvas.DrawText($"{data.CurrentXp % 100} / 100", expPoint, SKTextAlign.Center, expFont, textPaint);
+            canvas.DrawText($"{data.CurrentXp} / {data.CurrentXp + data.NextLevel}", expPoint, SKTextAlign.Center, expFont, textPaint);
             canvas.DrawText($"#{data.Position}", rankPoint, SKTextAlign.Left, rankFont, textPaint);
             if (data.AvatarBitmap is not null)
             {
@@ -88,7 +89,7 @@ public class RankCardService : IDisposable
                     paint.Shader = shader;
                     paint.IsAntialias = true;
 
-                    float cornerRadius = 100f; 
+                    float cornerRadius = 100f;
 
                     canvas.DrawRoundRect(avatarRect, cornerRadius, cornerRadius, paint);
                 }
@@ -108,6 +109,8 @@ public class RankCardData
     public string Username { get; set; } = "";
     public int Level { get; set; }
     public long CurrentXp { get; set; }
+    public long NextLevel { get; set; }
+    public long PrevLevel { get; set; }
     public int Position { get; set; }
     public SKBitmap? AvatarBitmap { get; set; }
 }

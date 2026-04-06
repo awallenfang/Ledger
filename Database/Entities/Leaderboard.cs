@@ -3,6 +3,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Database;
 
+public enum XpFormula
+{
+    Linear = 0,
+    Polynomial = 1,
+    Exponential = 2,
+    SquareRoot = 3,
+}
+
 public class XpGuildSettings
 {
     [Key]
@@ -16,6 +24,43 @@ public class XpGuildSettings
     public int ExpMin { get; set; } = 15;
     public int ExpMax { get; set; } = 25;
     public long Cooldown { get; set; } = 60;
+    public XpFormula Formula { get; set; } = XpFormula.Polynomial;
+    public double FormulaBase { get; set; } = 100;
+    public double FormulaMultiplier { get; set; } = 1.5;
+    public double FormulaExponent { get; set; } = 2.0;
+
+    public int GetTotalXpForLevel(int level) => Formula switch
+    {
+        XpFormula.Linear => (int)Math.Round(FormulaBase * level),
+        XpFormula.Polynomial => (int)Math.Round(5 * Math.Pow(level, 2) + 50 * level),
+        XpFormula.Exponential => (int)Math.Round(FormulaBase * (Math.Pow(FormulaMultiplier, level) - 1)),
+        XpFormula.SquareRoot => (int)Math.Round(FormulaBase * Math.Pow(level, 2)),
+        _ => (int)Math.Round(5 * Math.Pow(level, 2) + 50 * level),
+    };
+
+    public int GetLevel(int totalXp)
+    {
+        int level = Formula switch
+        {
+            XpFormula.Linear => (int)(totalXp / FormulaBase),
+            XpFormula.Polynomial => (int)((-50 + Math.Sqrt(2500 + 20 * totalXp)) / 10),
+            XpFormula.Exponential => (int)(Math.Log(totalXp / FormulaBase + 1) / Math.Log(FormulaMultiplier)),
+            XpFormula.SquareRoot => (int)Math.Sqrt(totalXp / FormulaBase),
+            _ => (int)((-50 + Math.Sqrt(2500 + 20 * totalXp)) / 10),
+        };
+
+        // Correct for floating point drift in either direction
+        while (GetTotalXpForLevel(level + 1) <= totalXp) level++;
+        while (level > 0 && GetTotalXpForLevel(level) > totalXp) level--;
+
+        return level;
+    }
+
+    public int GetXpToNextLevel(int totalXp)
+    {
+        int currentLevel = GetLevel(totalXp);
+        return GetTotalXpForLevel(currentLevel + 1) - totalXp;
+    }
 }
 
 public class XpUserSettings
@@ -58,8 +103,10 @@ public class XpGuildUserRank
     public DateTime LastExp { get; set; } = DateTime.UtcNow;
 
 
-    [NotMapped]
-    public int Level => (int)(Exp / 100.0) + 1;
+    // [NotMapped]
+    // public int Level => (int)(Exp / 100.0) + 1;
+    public int GetLevel(XpGuildSettings settings) => settings.GetLevel(Exp);
+    public int GetXpToNextLevel(XpGuildSettings settings) => settings.GetXpToNextLevel(Exp);
 
     public bool IsOnCooldown(long cooldown)
     {
@@ -75,7 +122,7 @@ public class XpGuildUserRank
         if (!IsOnCooldown(settings.Cooldown))
         {
             Exp += Random.Shared.Next(settings.ExpMin, settings.ExpMax);
-            
+
             LastExp = DateTime.UtcNow;
         }
     }
@@ -91,13 +138,13 @@ public class VoiceXpGuildUserRank
     public required GuildUser User { get; set; }
     public int Exp { get; set; }
 
-    [NotMapped]
-    public int Level => (int)(Exp / 100.0) + 1;
-
     public void AddExp()
     {
         Exp += Random.Shared.Next(15, 25);
     }
+    public int GetLevel(XpGuildSettings settings) => settings.GetLevel(Exp);
+    public int GetXpToNextLevel(XpGuildSettings settings) => settings.GetXpToNextLevel(Exp);
+
 }
 
 public class VoiceChatSession

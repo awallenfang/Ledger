@@ -73,8 +73,10 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
                 var rankCardData = new RankCardData
                 {
                     Username = ctx.Message.Author.Username,
-                    Level = userXp.Level,
+                    Level = userXp.GetLevel(guildSettings),
                     CurrentXp = userXp.Exp,
+                    NextLevel = userXp.GetXpToNextLevel(guildSettings),
+                    PrevLevel = guildSettings.GetTotalXpForLevel(userXp.GetLevel(guildSettings)),
                     Position = await leaderboardService.GetGuildRankAsync(userXp),
                     AvatarBitmap = await LoadBitmapFromWebAsync(guildUser.GetAvatarUri().ToString())
                 };
@@ -82,7 +84,7 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
 
                 var builder = new MessageBuilder()
                 .WithAttachment(rankCard, "rank.png", "image/png")
-            .WithContent($"Chat: Level {userXp.Level}, {userXp.Exp} Exp\nVoice: Level {VcUserXp.Level}, {VcUserXp.Exp} Exp");
+            .WithContent($"Chat: Level {userXp.GetLevel(guildSettings)}, {userXp.Exp} Exp\nVoice: Level {VcUserXp.GetLevel(guildSettings)}, {VcUserXp.Exp} Exp");
 
                 await ctx.ReplyAsync(builder.Build());
             }
@@ -154,7 +156,7 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
                         {
                             await ctx.ReplyAsync("Cooldown must be a positive number of seconds.");
                             break;
-                        } 
+                        }
                         guildSettings.Cooldown = cooldown;
                         await ctx.ReplyAsync($"Cooldown set to {cooldown} seconds.");
                         break;

@@ -51,9 +51,12 @@
             foreach (var userSettings in userGuildSettings) {
                 var guild = await bot.Rest.Guilds[userSettings.User.Guild.GuildId].GetAsync();
                 var dbGuild = await guild_db.GetOrCreateGuildAsync(userSettings.User.Guild.GuildId);
+                var guildSettings = await db.GetOrCreateSettingsAsync(dbGuild);
+
                 var guildUser = await guild_db.GetOrCreateGuildUserAsync(dbGuild, dbUser);
                 var guildRank = await db.GetOrCreateUserRankAsync(guildUser);
                 var position = await db.GetGuildRankAsync(guildRank);
+                
                 trackedGuilds.Add(
                     new TrackedGuild {
                         ID=userSettings.User.Guild.GuildId,
@@ -62,7 +65,7 @@
                         Name=guild.Name,
                         IconURL=$"https://fluxerusercontent.com/icons/{guild.Id}/{guild.IconHash}.webp",
                         Exp=guildRank.Exp,
-                        Level=guildRank.Level,
+                        Level=guildRank.GetLevel(guildSettings),
                         Position=position
                     }
                 );

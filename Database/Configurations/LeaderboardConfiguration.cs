@@ -13,6 +13,12 @@ public class XpGuildSettingsConfiguration : IEntityTypeConfiguration<XpGuildSett
         builder.Property(e => e.ExpMin).HasDefaultValue(15);
         builder.Property(e => e.ExpMax).HasDefaultValue(25);
         builder.Property(e => e.Cooldown).HasDefaultValue(60);
+        builder.Property(e => e.Formula)
+            .HasConversion<string>()
+            .HasDefaultValue(XpFormula.Polynomial);
+        builder.Property(e => e.FormulaBase).HasDefaultValue(100.0);
+        builder.Property(e => e.FormulaMultiplier).HasDefaultValue(1.5);
+        builder.Property(e => e.FormulaExponent).HasDefaultValue(2.0);
     }
 }
 public class XpUserSettingsConfiguration : IEntityTypeConfiguration<XpUserSettings>

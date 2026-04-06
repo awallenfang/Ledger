@@ -6,6 +6,7 @@
 @using Database
 @using Database.Services
 @using Microsoft.AspNetCore.Mvc.ModelBinding
+@inject GuildDbService guild_db
 @inject LeaderboardDbService db
 @inject BotRestClient rest
 @inject AuthenticationStateProvider AuthStateProvider
@@ -42,24 +43,27 @@ else
                 <tr>
                     <td>#@user.Position</td>
                     <td>@if (user.AvatarURL!= null){
-                        <div class="center-cropped" style="background-image: url('@user.AvatarURL')"></div>}@user.Name</td>
-                    <td>@user.CurrentLevel</td>
-                    <td>@user.Exp</td>
-                    <td>
-                        <div
-                            style="width: 10rem; background: var(--bs-body-bg-alt); border-radius: 4px; vertical-align: middle">
-                            <div style="width: @( (user.Exp % 100) / 2.0 )%; 
-                                background: var(--bs-primary); 
-                                height: 10px; 
-                                border-radius: 4px;">
-                            </div>
+                        <div class="center-cropped" style="background-image: url('@user.AvatarURL')"></div>
+                    }
+                    @user.Name
+                </td>
+                <td>@user.CurrentLevel</td>
+                <td>@user.Exp</td>
+                <td>
+                    <div
+                        style="width: 10rem; background: var(--bs-body-bg-alt); border-radius: 4px; vertical-align: middle">
+                        <div style="width: @( (user.Exp % 100) / 2.0 )%; 
+                            background: var(--bs-primary); 
+                            height: 10px; 
+                            border-radius: 4px;">
                         </div>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-} 
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+}
 
 <div class="d-flex justify-content-center gap-2 mt-3">
     @if (page > 0)
@@ -88,18 +92,23 @@ else
         db_users = db_users.Take(PageSize).ToList();
         var actual_users = new List<User>();
         var idx = (page * PageSize) + 1;
+        var guild = await guild_db.GetOrCreateGuildAsync(long.Parse(guild_id!));
+        var guildSettings = await db.GetOrCreateSettingsAsync(guild);
         foreach (var user in db_users)
         {
             var fluxerUser = await rest.Users[user.User.UserId].GetAsync();
             if (fluxerUser is not null)
             {
+                var level = guildSettings.GetLevel(user.Exp);
+                var bar_percentage = (float)(user.Exp - guildSettings.GetTotalXpForLevel(level)) / (float)(user.Exp + guildSettings.GetTotalXpForLevel(level+1) - guildSettings.GetTotalXpForLevel(level));
                 var url = $"https://fluxerusercontent.com/avatars/{user.User.UserId}/{fluxerUser.Avatar}.webp" ?? null;
                 actual_users.Add(
                     new User
                     {
                         Name = fluxerUser.Username,
                         Exp = user.Exp,
-                        CurrentLevel = user.Level,
+                        CurrentLevel = level,
+                        BarPercentage = (int)(bar_percentage * 100),
                         Position = idx,
                         AvatarURL = url
                     }
@@ -117,6 +126,7 @@ else
         public string Name { get; set; }
         public int Exp { get; set; }
         public int CurrentLevel { get; set; }
+        public int BarPercentage { get; set; }
         public int Position { get; set; }
         public string? AvatarURL { get; set; }
     }
