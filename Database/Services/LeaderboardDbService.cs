@@ -128,7 +128,7 @@ public class LeaderboardDbService
     public async Task<int> GetGuildRankAsync(XpGuildUserRank guildUser)
     {
         var rank = await _db.XpGuildUsers
-            .Where(u => u.User.Guild == guildUser.User.Guild && u.Exp > guildUser.Exp)
+            .Where(u => u.User.Guild == guildUser.User.Guild && u.Exp > guildUser.Exp && u.GuildUserId != guildUser.GuildUserId)
             .Where(u => _db.XpGuildUserSettings
                 .Any(s => s.User == u.User && s.Leaderboard == true))
             .CountAsync();
