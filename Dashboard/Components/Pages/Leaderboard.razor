@@ -49,13 +49,19 @@ else
                 </td>
                 <td>@user.CurrentLevel</td>
                 <td>@user.Exp</td>
-                <td>
-                    <div
-                        style="width: 10rem; background: var(--bs-body-bg-alt); border-radius: 4px; vertical-align: middle">
-                        <div style="width: @( (user.Exp % 100) / 2.0 )%; 
-                            background: var(--bs-primary); 
-                            height: 10px; 
-                            border-radius: 4px;">
+                <td class="d-none d-md-table-cell">
+                    <div style="width: 10rem; background: var(--bs-body-bg-alt); border-radius: 4px;">
+                        <div
+                            style="width: @user.BarPercentage%; background: var(--bs-primary); height: 10px; border-radius: 4px;">
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr class="d-table-row d-md-none">
+                <td colspan="4" class="pt-2">
+                    <div style="width: 100%; background: var(--bs-body-bg-alt); border-radius: 4px;">
+                        <div
+                            style="width: @user.BarPercentage%; background: var(--bs-primary); height: 10px; border-radius: 4px;">
                         </div>
                     </div>
                 </td>
@@ -100,7 +106,8 @@ else
             if (fluxerUser is not null)
             {
                 var level = guildSettings.GetLevel(user.Exp);
-                var bar_percentage = (float)(user.Exp - guildSettings.GetTotalXpForLevel(level)) / (float)(user.Exp + guildSettings.GetTotalXpForLevel(level+1) - guildSettings.GetTotalXpForLevel(level));
+                var bar_percentage = (float)(user.Exp - guildSettings.GetTotalXpForLevel(level)) / (float)(user.Exp +
+guildSettings.GetTotalXpForLevel(level + 1) - guildSettings.GetTotalXpForLevel(level));
                 var url = $"https://fluxerusercontent.com/avatars/{user.User.UserId}/{fluxerUser.Avatar}.webp" ?? null;
                 actual_users.Add(
                     new User
