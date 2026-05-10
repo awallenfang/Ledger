@@ -24,7 +24,7 @@
     protected override async Task OnInitializedAsync()
     {
         model ??= new();
-    
+
         try
         {
             var authState = await AuthenticationStateTask!;
@@ -42,7 +42,7 @@
             }
             var dbUser = await guild_db.GetOrCreateUserAsync(userId);
             var settings = await db.GetOrCreateUserSettingsAsync(dbUser);
-        
+
             if (settings is not null)
             {
                 model.Global = settings.Global;
@@ -56,14 +56,14 @@
                 var guildUser = await guild_db.GetOrCreateGuildUserAsync(dbGuild, dbUser);
                 var guildRank = await db.GetOrCreateUserRankAsync(guildUser);
                 var position = await db.GetGuildRankAsync(guildRank);
-                
+
                 trackedGuilds.Add(
                     new TrackedGuild {
                         ID=userSettings.User.Guild.GuildId,
                         Active=userSettings.Active,
                         Leaderboard=userSettings.Leaderboard,
                         Name=guild.Name,
-                        IconURL=$"https://fluxerusercontent.com/icons/{guild.Id}/{guild.IconHash}.webp",
+                        IconURL=$"https://fluxerusercontent.com/icons/{guild.Id}/{guild.Icon?.Hash}.webp",
                         Exp=guildRank.Exp,
                         Level=guildRank.GetLevel(guildSettings),
                         Position=position
@@ -112,7 +112,7 @@
                         // Assuming you have a method to update specific guild settings
                         await db.UpdateGuildUserSettings(userId, guild.ID, guild.Active, guild.Leaderboard);
                     }
-                    _ = ShowSuccessMessage();   
+                    _ = ShowSuccessMessage();
                 }
             }
         }
@@ -131,12 +131,12 @@
         await Task.Delay(time);
         success = false;
 
-        await InvokeAsync(StateHasChanged);       
+        await InvokeAsync(StateHasChanged);
     }
 
     public class FormModel
     {
-        
+
         public bool Global { get; set; }
         public List<TrackedGuild> Guilds { get; set; } = new();
     }
@@ -184,7 +184,7 @@ else
         <h4>Tracked Guilds</h4>
     @foreach (var guild in model.Guilds)
     {
-        <div class="card w-100 mb-2"> 
+        <div class="card w-100 mb-2">
             <h5 class="card-header">
                 <img class="rounded me-1" src="@guild.IconURL" width=30 height=30>
                 @guild.Name
@@ -194,7 +194,7 @@ else
                 <div class="form-check">
                     <InputCheckbox @bind-Value="guild.Active" class="form-check-input" id="@($"check-{guild.ID}-active")" />
                     <label class="form-check-label" for="@($"check-{guild.ID}-active")">Tracking Exp</label>
-                </div> 
+                </div>
                 <div class="form-check">
                     <InputCheckbox @bind-Value="guild.Leaderboard" class="form-check-input" id="@($"check-{guild.ID}-leaderboard")" />
                     <label class="form-check-label" for="@($"check-{guild.ID}-leaderboard")">Show on guild leaderboard</label>
