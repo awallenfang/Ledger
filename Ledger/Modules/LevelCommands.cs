@@ -60,7 +60,7 @@ public class LevelCommands(CommandContext ctx, IHostEnvironment env, AppDbContex
             var userId = (ulong)ctx.Message.Author.Id;
             // Fetch the corresponding database object and create it if it doesn't exist
             var guild = await guildService.GetOrCreateGuildAsync((long)guildId);
-            var guildUser = (Fluxify.Application.Entities.Users.GuildMember)ctx.Message.Author;
+            var guildUser = (Fluxify.Application.Entities.Guilds.Members.GuildMember)ctx.Message.Author;
             // Fetch the corresponding settings and create it if it doesn't exist
             var guildSettings = await leaderboardService.GetOrCreateSettingsAsync(guild);
 
