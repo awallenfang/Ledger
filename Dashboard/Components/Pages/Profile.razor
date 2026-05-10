@@ -182,26 +182,6 @@ else
     <EditForm Model="model" OnValidSubmit="Submit" FormName="Starship2">
         <DataAnnotationsValidator />
         <h4>Tracked Guilds</h4>
-    @foreach (var guild in model.Guilds)
-    {
-        <div class="card w-100 mb-2">
-            <h5 class="card-header">
-                <img class="rounded me-1" src="@guild.IconURL" width=30 height=30>
-                @guild.Name
-                <div class="float-end">#@guild.Position, Level: @guild.Level</div>
-            </h5>
-            <div class="card-body">
-                <div class="form-check">
-                    <InputCheckbox @bind-Value="guild.Active" class="form-check-input" id="@($"check-{guild.ID}-active")" />
-                    <label class="form-check-label" for="@($"check-{guild.ID}-active")">Tracking Exp</label>
-                </div>
-                <div class="form-check">
-                    <InputCheckbox @bind-Value="guild.Leaderboard" class="form-check-input" id="@($"check-{guild.ID}-leaderboard")" />
-                    <label class="form-check-label" for="@($"check-{guild.ID}-leaderboard")">Show on guild leaderboard</label>
-                </div>
-            </div>
-        </div>
-    }
     <hr />
         <ValidationSummary />
         <h4>General Settings</h4>
