@@ -40,6 +40,7 @@ public class XpGuildUserSettingsConfiguration : IEntityTypeConfiguration<XpGuild
         builder.HasOne(e => e.User)
                .WithMany()
                .HasForeignKey(e => e.GuildUserId);
+        builder.HasIndex(e => e.GuildUserId).IsUnique();
     }
 }
 

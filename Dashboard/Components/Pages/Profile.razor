@@ -11,6 +11,7 @@
 @inject LeaderboardDbService db
 @inject GuildDbService guild_db
 @inject Bot bot
+@inject UserRestClient user_rest
 <PageTitle>Profile Settings</PageTitle>
 <h3>Profile Settings</h3>
 
@@ -71,8 +72,20 @@
                 );
             }
 
-            model.Guilds.Clear();
-            model.Guilds = trackedGuilds;
+            try
+            {
+                var userGuilds = await user_rest.Guilds.ListAsync(limit: 200);
+                var userGuildIds = userGuilds
+                    .Select(g => g.Id)
+                    .ToHashSet();
+                trackedGuilds = trackedGuilds.Where(g => userGuildIds.Contains(g.ID)).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to filter tracked guilds: {ex.Message}");
+            }
+
+
         }
         catch (Fluxify.Rest.RestApiException ex)
         {
@@ -107,9 +120,12 @@
                 if (long.TryParse(userIdString, out long userId))
                 {
                     await db.UpdateUserSettings(userId, model!.Global);
-                    foreach (var guild in model.Guilds)
+
+                    var validSettings = await db.GetAllGuildUserSettings(userId);
+                    var validGuildIds = validSettings.Select(s => s.User.Guild.GuildId).ToHashSet();
+
+                    foreach (var guild in trackedGuilds.Where(g => validGuildIds.Contains(g.ID)))
                     {
-                        // Assuming you have a method to update specific guild settings
                         await db.UpdateGuildUserSettings(userId, guild.ID, guild.Active, guild.Leaderboard);
                     }
                     _ = ShowSuccessMessage();
@@ -136,9 +152,7 @@
 
     public class FormModel
     {
-
         public bool Global { get; set; }
-        public List<TrackedGuild> Guilds { get; set; } = new();
     }
 
     public class TrackedGuild
@@ -182,6 +196,26 @@ else
     <EditForm Model="model" OnValidSubmit="Submit" FormName="Starship2">
         <DataAnnotationsValidator />
         <h4>Tracked Guilds</h4>
+        @foreach (var guild in trackedGuilds)
+    {
+        <div class="card w-100 mb-2">
+            <h5 class="card-header">
+                <img class="rounded me-1" src="@guild.IconURL" width=30 height=30>
+                @guild.Name
+                <div class="float-end">#@guild.Position, Level: @guild.Level</div>
+            </h5>
+            <div class="card-body">
+                <div class="form-check">
+                    <InputCheckbox @bind-Value="guild.Active" class="form-check-input" id="@($"check-{guild.ID}-active")" />
+                    <label class="form-check-label" for="@($"check-{guild.ID}-active")">Tracking Exp</label>
+                </div>
+                <div class="form-check">
+                    <InputCheckbox @bind-Value="guild.Leaderboard" class="form-check-input" id="@($"check-{guild.ID}-leaderboard")" />
+                    <label class="form-check-label" for="@($"check-{guild.ID}-leaderboard")">Show on guild leaderboard</label>
+                </div>
+            </div>
+        </div>
+    }
     <hr />
         <ValidationSummary />
         <h4>General Settings</h4>
