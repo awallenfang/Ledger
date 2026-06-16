@@ -210,7 +210,11 @@ public class LeaderboardDbService
 
     public async Task<List<XpGuildUserSettings>> GetAllGuildUserSettings(long userId)
     {
-        return await _db.XpGuildUserSettings.Include(u => u.User).ThenInclude(gu => gu.Guild).ToListAsync();
+        return await _db.XpGuildUserSettings
+            .Include(u => u.User)
+            .ThenInclude(gu => gu.Guild)
+            .Where(u => u.User.User.UserId == userId)
+            .ToListAsync();
     }
 
 
