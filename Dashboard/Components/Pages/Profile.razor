@@ -142,6 +142,40 @@
         }
     }
 
+    private long? resetConfirmGuildId;
+
+    private async Task ResetLevelAsync(TrackedGuild guild)
+    {
+        var authState = await AuthenticationStateTask!;
+        var claimsUser = authState.User;
+
+        if (claimsUser.Identity?.IsAuthenticated != true)
+            return;
+
+        var userIdString = claimsUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!long.TryParse(userIdString, out long userId))
+            return;
+
+        if (!trackedGuilds.Any(g => g.ID == guild.ID))
+            return;
+
+        await db.ResetUserLevelAsync(userId, guild.ID);
+
+        var dbUser = await guild_db.GetOrCreateUserAsync(userId);
+        var dbGuild = await guild_db.GetOrCreateGuildAsync(guild.ID);
+        var guildUser = await guild_db.GetOrCreateGuildUserAsync(dbGuild, dbUser);
+        var guildSettings = await db.GetOrCreateSettingsAsync(dbGuild);
+        var guildRank = await db.GetOrCreateUserRankAsync(guildUser);
+        var position = await db.GetGuildRankAsync(guildRank);
+
+        guild.Exp = guildRank.Exp;
+        guild.Level = guildRank.GetLevel(guildSettings);
+        guild.Position = position;
+        resetConfirmGuildId = null;
+
+        await ShowSuccessMessage();
+    }
+
     private async Task ShowSuccessMessage(int time = 3000) {
         success = true;
         await Task.Delay(time);
@@ -214,6 +248,17 @@ else
                     <InputCheckbox @bind-Value="guild.Leaderboard" class="form-check-input" id="@($"check-{guild.ID}-leaderboard")" />
                     <label class="form-check-label" for="@($"check-{guild.ID}-leaderboard")">Show on guild leaderboard</label>
                 </div>
+                @if (resetConfirmGuildId == guild.ID)
+                {
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-danger btn-sm me-1" @onclick="() => ResetLevelAsync(guild)">Confirm Reset</button>
+                        <button type="button" class="btn btn-secondary btn-sm" @onclick="() => resetConfirmGuildId = null">Cancel</button>
+                    </div>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-warning btn-sm mt-2" @onclick="() => resetConfirmGuildId = guild.ID">Reset Level</button>
+                }
             </div>
         </div>
     }

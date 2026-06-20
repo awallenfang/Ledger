@@ -285,4 +285,28 @@ public class LeaderboardDbService
 
         return settings;
     }
+
+    public async Task ResetUserLevelAsync(long userId, long guildId)
+    {
+        var guildUser = await _db.GuildUsers
+            .FirstOrDefaultAsync(u => u.User.UserId == userId && u.Guild.GuildId == guildId);
+        if (guildUser is null) throw new InvalidOperationException($"User {userId} not found in guild {guildId}.");
+
+        var textRank = await _db.XpGuildUsers
+            .FirstOrDefaultAsync(r => r.User == guildUser);
+        if (textRank is not null)
+        {
+            textRank.Exp = 0;
+            textRank.Messages = 0;
+        }
+
+        var voiceRank = await _db.VCXpGuildUsers
+            .FirstOrDefaultAsync(r => r.User == guildUser);
+        if (voiceRank is not null)
+        {
+            voiceRank.Exp = 0;
+        }
+
+        await _db.SaveChangesAsync();
+    }
 }
