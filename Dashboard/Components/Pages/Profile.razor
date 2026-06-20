@@ -194,6 +194,7 @@
 else
 {
     <EditForm Model="model" OnValidSubmit="Submit" FormName="Starship2">
+        <AntiforgeryToken />
         <DataAnnotationsValidator />
         <h4>Tracked Guilds</h4>
         @foreach (var guild in trackedGuilds)

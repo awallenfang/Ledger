@@ -22,6 +22,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddAntiforgery();
 var token = builder.Configuration["token"]
     ?? throw new InvalidOperationException("TOKEN is missing from configuration.");
 builder.Services.AddScoped(sp =>
