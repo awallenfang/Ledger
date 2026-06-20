@@ -36,7 +36,7 @@
                 <span>Profile</span>
               </NavLink>
               <p class="mb-0">Welcome, @auth.User.FindFirst(ClaimTypes.Name)!.Value</p>
-              <a href="/logout" class="btn btn-primary text-white text-dark">Logout</a>
+              <a href="/logout" class="btn btn-primary">Logout</a>
             </div>
           </Authorized>
           <NotAuthorized>

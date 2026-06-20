@@ -143,37 +143,48 @@
     }
 
     private long? resetConfirmGuildId;
+    private bool isResetting;
 
     private async Task ResetLevelAsync(TrackedGuild guild)
     {
-        var authState = await AuthenticationStateTask!;
-        var claimsUser = authState.User;
+        if (isResetting) return;
+        isResetting = true;
 
-        if (claimsUser.Identity?.IsAuthenticated != true)
-            return;
+        try
+        {
+            var authState = await AuthenticationStateTask!;
+            var claimsUser = authState.User;
 
-        var userIdString = claimsUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!long.TryParse(userIdString, out long userId))
-            return;
+            if (claimsUser.Identity?.IsAuthenticated != true)
+                return;
 
-        if (!trackedGuilds.Any(g => g.ID == guild.ID))
-            return;
+            var userIdString = claimsUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!long.TryParse(userIdString, out long userId))
+                return;
 
-        await db.ResetUserLevelAsync(userId, guild.ID);
+            if (!trackedGuilds.Any(g => g.ID == guild.ID))
+                return;
 
-        var dbUser = await guild_db.GetOrCreateUserAsync(userId);
-        var dbGuild = await guild_db.GetOrCreateGuildAsync(guild.ID);
-        var guildUser = await guild_db.GetOrCreateGuildUserAsync(dbGuild, dbUser);
-        var guildSettings = await db.GetOrCreateSettingsAsync(dbGuild);
-        var guildRank = await db.GetOrCreateUserRankAsync(guildUser);
-        var position = await db.GetGuildRankAsync(guildRank);
+            await db.ResetUserLevelAsync(userId, guild.ID);
 
-        guild.Exp = guildRank.Exp;
-        guild.Level = guildRank.GetLevel(guildSettings);
-        guild.Position = position;
-        resetConfirmGuildId = null;
+            var dbUser = await guild_db.GetOrCreateUserAsync(userId);
+            var dbGuild = await guild_db.GetOrCreateGuildAsync(guild.ID);
+            var guildUser = await guild_db.GetOrCreateGuildUserAsync(dbGuild, dbUser);
+            var guildSettings = await db.GetOrCreateSettingsAsync(dbGuild);
+            var guildRank = await db.GetOrCreateUserRankAsync(guildUser);
+            var position = await db.GetGuildRankAsync(guildRank);
 
-        await ShowSuccessMessage();
+            guild.Exp = guildRank.Exp;
+            guild.Level = guildRank.GetLevel(guildSettings);
+            guild.Position = position;
+            resetConfirmGuildId = null;
+
+            await ShowSuccessMessage();
+        }
+        finally
+        {
+            isResetting = false;
+        }
     }
 
     private async Task ShowSuccessMessage(int time = 3000) {
@@ -227,17 +238,19 @@
 }
 else
 {
-    <EditForm Model="model" OnValidSubmit="Submit" FormName="Starship2">
+    <EditForm Model="model" OnValidSubmit="Submit" FormName="ProfileForm">
         <AntiforgeryToken />
         <DataAnnotationsValidator />
         <h4>Tracked Guilds</h4>
         @foreach (var guild in trackedGuilds)
     {
         <div class="card w-100 mb-2">
-            <h5 class="card-header">
-                <img class="rounded me-1" src="@guild.IconURL" width=30 height=30>
-                @guild.Name
-                <div class="float-end">#@guild.Position, Level: @guild.Level</div>
+            <h5 class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    <img class="rounded me-1" src="@guild.IconURL" width=30 height=30>
+                    @guild.Name
+                </span>
+                <span>#@guild.Position, Level: @guild.Level</span>
             </h5>
             <div class="card-body">
                 <div class="form-check">
@@ -251,7 +264,7 @@ else
                 @if (resetConfirmGuildId == guild.ID)
                 {
                     <div class="mt-2">
-                        <button type="button" class="btn btn-danger btn-sm me-1" @onclick="() => ResetLevelAsync(guild)">Confirm Reset</button>
+                        <button type="button" class="btn btn-danger btn-sm me-1" disabled="@isResetting" @onclick="() => ResetLevelAsync(guild)">Confirm Reset</button>
                         <button type="button" class="btn btn-secondary btn-sm" @onclick="() => resetConfirmGuildId = null">Cancel</button>
                     </div>
                 }
@@ -262,14 +275,14 @@ else
             </div>
         </div>
     }
-    <hr />
+    <hr class="my-4" />
         <ValidationSummary />
         <h4>General Settings</h4>
-        <div class="form-group mt-3">
+        <div class="mb-3">
             <InputCheckbox @bind-Value="model!.Global" class="form-check-input" id="globalCheck" />
             <label class="form-label" for="globalCheck">Show rank on global leaderboards</label>
         </div>
-        <button type="submit" class="btn btn-primary text-white" disabled="@isLoading">
+        <button type="submit" class="btn btn-primary" disabled="@isLoading">
             @(isLoading ? "Saving..." : "Save")
         </button>
     </EditForm>
