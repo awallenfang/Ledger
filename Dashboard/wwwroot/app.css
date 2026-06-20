@@ -49,3 +49,21 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.podium-card {
+    transition: transform .2s, box-shadow .2s;
+    border-width: 2px;
+}
+.podium-card:hover {
+    transform: translateY(-4px);
+}
+.podium-gold {
+    border-color: var(--bs-warning);
+    box-shadow: 0 0 20px rgba(255, 180, 40, .25);
+}
+.podium-silver {
+    border-color: var(--bs-secondary);
+}
+.podium-bronze {
+    border-color: var(--bs-danger);
+}
