@@ -1,0 +1,150 @@
+@page "/debug/leaderboard"
+
+<PageTitle>Debug Leaderboard</PageTitle>
+<h1>Debug Leaderboard</h1>
+
+<div class="d-flex justify-content-center gap-2 mt-3 mb-3">
+    <a href="/debug/leaderboard" class="btn btn-primary">Text Leaderboard</a>
+    <a href="/debug/leaderboard-vc" class="btn btn-primary">VC Leaderboard</a>
+    <a href="/debug/leaderboard-global" class="btn btn-primary">Global Leaderboard</a>
+</div>
+
+@{
+    var podiumUsers = DebugUsers.Take(3).ToList();
+    var user1 = podiumUsers.FirstOrDefault(u => u.Position == 1);
+    var user2 = podiumUsers.FirstOrDefault(u => u.Position == 2);
+    var user3 = podiumUsers.FirstOrDefault(u => u.Position == 3);
+    var tableUsers = DebugUsers.Skip(3).ToList();
+}
+
+<div class="d-flex justify-content-center align-items-end gap-3 mb-4" style="min-height: 320px;">
+    @if (user2 != null)
+    {
+        <div class="card podium-card podium-silver text-center" style="width: 220px;">
+            <div class="card-body">
+                <i class="bi bi-award-fill fs-1" style="color: var(--bs-secondary);"></i>
+                <br>
+                @if (user2.AvatarURL != null)
+                {
+                    <img class="rounded-circle border border-2 border-secondary mt-1" src="@user2.AvatarURL" width="80" height="80" style="object-fit: cover;" alt="">
+                }
+                <h5 class="mt-2 mb-0">@user2.Name</h5>
+                <div class="text-muted small">Level @user2.CurrentLevel · @user2.Exp XP</div>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar" style="width: @user2.BarPercentage%; background: var(--bs-secondary);"></div>
+                </div>
+                <div class="mt-1 fw-bold small" style="color: var(--bs-secondary);">#2</div>
+            </div>
+        </div>
+    }
+    @if (user1 != null)
+    {
+        <div class="card podium-card podium-gold text-center" style="width: 260px; z-index: 1;">
+            <div class="card-body">
+                <i class="bi bi-trophy-fill fs-1" style="color: var(--bs-warning);"></i>
+                <br>
+                @if (user1.AvatarURL != null)
+                {
+                    <img class="rounded-circle border border-3 border-warning mt-1" src="@user1.AvatarURL" width="100" height="100" style="object-fit: cover;" alt="">
+                }
+                <h4 class="mt-2 mb-0">@user1.Name</h4>
+                <div class="text-muted small">Level @user1.CurrentLevel · @user1.Exp XP</div>
+                <div class="progress mt-2" style="height: 8px;">
+                    <div class="progress-bar" style="width: @user1.BarPercentage%; background: var(--bs-warning);"></div>
+                </div>
+                <div class="mt-1 fw-bold small" style="color: var(--bs-warning);">#1</div>
+            </div>
+        </div>
+    }
+    @if (user3 != null)
+    {
+        <div class="card podium-card podium-bronze text-center" style="width: 220px;">
+            <div class="card-body">
+                <i class="bi bi-star-fill fs-1" style="color: var(--bs-danger);"></i>
+                <br>
+                @if (user3.AvatarURL != null)
+                {
+                    <img class="rounded-circle border border-2 border-danger mt-1" src="@user3.AvatarURL" width="80" height="80" style="object-fit: cover;" alt="">
+                }
+                <h5 class="mt-2 mb-0">@user3.Name</h5>
+                <div class="text-muted small">Level @user3.CurrentLevel · @user3.Exp XP</div>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar" style="width: @user3.BarPercentage%; background: var(--bs-danger);"></div>
+                </div>
+                <div class="mt-1 fw-bold small" style="color: var(--bs-danger);">#3</div>
+            </div>
+        </div>
+    }
+</div>
+
+<table class="table w-100 align-middle text-center">
+    <thead>
+        <tr>
+            <td>Position</td>
+            <td>Name</td>
+            <td>Level</td>
+            <td>Exp</td>
+            <td></td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in tableUsers)
+        {
+            <tr>
+                <td>#@user.Position</td>
+                <td>
+                    @if (user.AvatarURL != null)
+                    {
+                        <img class="rounded-circle me-1" src="@user.AvatarURL" width="24" height="24" style="object-fit: cover;" alt="">
+                    }
+                    @user.Name
+                </td>
+                <td>@user.CurrentLevel</td>
+                <td>@user.Exp</td>
+                <td class="d-none d-md-table-cell">
+                    <div style="width: 10rem; background: var(--bs-body-bg-alt); border-radius: 4px;">
+                        <div style="width: @user.BarPercentage%; background: var(--bs-primary); height: 10px; border-radius: 4px;"></div>
+                    </div>
+                </td>
+            </tr>
+            <tr class="d-table-row d-md-none">
+                <td colspan="4" class="pt-2">
+                    <div style="width: 100%; background: var(--bs-body-bg-alt); border-radius: 4px;">
+                        <div style="width: @user.BarPercentage%; background: var(--bs-primary); height: 10px; border-radius: 4px;"></div>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<DebugUser> DebugUsers = new();
+
+    protected override void OnInitialized()
+    {
+        DebugUsers = new List<DebugUser>
+        {
+            new() { Name = "Luna", Exp = 8450, Position = 1, BarPercentage = 72 },
+            new() { Name = "Aether", Exp = 6320, Position = 2, BarPercentage = 45 },
+            new() { Name = "Nova", Exp = 5100, Position = 3, BarPercentage = 88 },
+            new() { Name = "Orion", Exp = 4200, Position = 4, BarPercentage = 30 },
+            new() { Name = "Celeste", Exp = 3800, Position = 5, BarPercentage = 60 },
+            new() { Name = "Raven", Exp = 2900, Position = 6, BarPercentage = 15 },
+            new() { Name = "Echo", Exp = 2100, Position = 7, BarPercentage = 55 },
+            new() { Name = "Frost", Exp = 1500, Position = 8, BarPercentage = 75 },
+            new() { Name = "Ember", Exp = 900, Position = 9, BarPercentage = 40 },
+            new() { Name = "Vale", Exp = 400, Position = 10, BarPercentage = 10 },
+        };
+    }
+
+    private class DebugUser
+    {
+        public string Name { get; set; }
+        public int Exp { get; set; }
+        public int CurrentLevel => (int)(Exp / 100.0) + 1;
+        public int BarPercentage { get; set; }
+        public int Position { get; set; }
+        public string? AvatarURL => $"https://i.pravatar.cc/100?u={Name}";
+    }
+}
