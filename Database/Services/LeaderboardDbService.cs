@@ -202,45 +202,111 @@ public class LeaderboardDbService
 
     public async Task<XpGuildUserSettings> GetOrCreateXpGuildUserSettings(GuildUser guildUser)
     {
-        var user = await _db.XpGuildUserSettings.FirstOrDefaultAsync(s => s.User == guildUser)
-                ?? _db.XpGuildUserSettings.Add(new XpGuildUserSettings { GuildUserId = guildUser.Id, User = guildUser, Active = true, Leaderboard = true }).Entity;
-        await _db.SaveChangesAsync();
-        return user;
+        var existing = await _db.XpGuildUserSettings
+            .FirstOrDefaultAsync(s => s.GuildUserId == guildUser.Id);
+
+        if (existing is not null)
+            return existing;
+
+        var settings = new XpGuildUserSettings
+        {
+            GuildUserId = guildUser.Id,
+            User = guildUser,
+            Active = true,
+            Leaderboard = true
+        };
+
+        _db.XpGuildUserSettings.Add(settings);
+
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _db.Entry(settings).State = EntityState.Detached;
+            settings = await _db.XpGuildUserSettings
+                .FirstAsync(s => s.GuildUserId == guildUser.Id);
+        }
+
+        return settings;
     }
 
     public async Task<List<XpGuildUserSettings>> GetAllGuildUserSettings(long userId)
     {
-        return await _db.XpGuildUserSettings.Include(u => u.User).ThenInclude(gu => gu.Guild).ToListAsync();
+        return await _db.XpGuildUserSettings
+            .Include(u => u.User)
+            .ThenInclude(gu => gu.Guild)
+            .Where(u => u.User.User.UserId == userId)
+            .ToListAsync();
     }
 
 
     public async Task<XpGuildUserSettings> UpdateGuildUserSettings(long userId, long guildId, bool active, bool leaderboard)
     {
-        var guildUser = await _db.GuildUsers.FirstOrDefaultAsync(u => u.User.UserId == userId && u.Guild.GuildId == guildId);
+        var guildUser = await _db.GuildUsers
+            .FirstOrDefaultAsync(u => u.User.UserId == userId && u.Guild.GuildId == guildId);
         if (guildUser is null) throw new InvalidOperationException($"User {userId} not found.");
+
         var settings = await _db.XpGuildUserSettings
-            .FirstOrDefaultAsync(s => s.User == guildUser);
+            .FirstOrDefaultAsync(s => s.GuildUserId == guildUser.Id);
 
         if (settings is null)
         {
             settings = new XpGuildUserSettings
             {
-                User = guildUser,
                 GuildUserId = guildUser.Id,
+                User = guildUser,
                 Active = active,
                 Leaderboard = leaderboard
             };
             _db.XpGuildUserSettings.Add(settings);
+
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                _db.Entry(settings).State = EntityState.Detached;
+                settings = await _db.XpGuildUserSettings
+                    .FirstAsync(s => s.GuildUserId == guildUser.Id);
+                settings.Active = active;
+                settings.Leaderboard = leaderboard;
+                await _db.SaveChangesAsync();
+            }
         }
         else
         {
             settings.Active = active;
             settings.Leaderboard = leaderboard;
+            await _db.SaveChangesAsync();
         }
 
-        var rows = await _db.SaveChangesAsync();
-
         return settings;
+    }
 
+    public async Task ResetUserLevelAsync(long userId, long guildId)
+    {
+        var guildUser = await _db.GuildUsers
+            .FirstOrDefaultAsync(u => u.User.UserId == userId && u.Guild.GuildId == guildId);
+        if (guildUser is null) throw new InvalidOperationException($"User {userId} not found in guild {guildId}.");
+
+        var textRank = await _db.XpGuildUsers
+            .FirstOrDefaultAsync(r => r.User == guildUser);
+        if (textRank is not null)
+        {
+            textRank.Exp = 0;
+            textRank.Messages = 0;
+        }
+
+        var voiceRank = await _db.VCXpGuildUsers
+            .FirstOrDefaultAsync(r => r.User == guildUser);
+        if (voiceRank is not null)
+        {
+            voiceRank.Exp = 0;
+        }
+
+        await _db.SaveChangesAsync();
     }
 }

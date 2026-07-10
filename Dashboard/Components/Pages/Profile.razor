@@ -11,6 +11,7 @@
 @inject LeaderboardDbService db
 @inject GuildDbService guild_db
 @inject Bot bot
+@inject UserRestClient user_rest
 <PageTitle>Profile Settings</PageTitle>
 <h3>Profile Settings</h3>
 
@@ -71,8 +72,20 @@
                 );
             }
 
-            model.Guilds.Clear();
-            model.Guilds = trackedGuilds;
+            try
+            {
+                var userGuilds = await user_rest.Guilds.ListAsync(limit: 200);
+                var userGuildIds = userGuilds
+                    .Select(g => g.Id)
+                    .ToHashSet();
+                trackedGuilds = trackedGuilds.Where(g => userGuildIds.Contains(g.ID)).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to filter tracked guilds: {ex.Message}");
+            }
+
+
         }
         catch (Fluxify.Rest.RestApiException ex)
         {
@@ -107,9 +120,12 @@
                 if (long.TryParse(userIdString, out long userId))
                 {
                     await db.UpdateUserSettings(userId, model!.Global);
-                    foreach (var guild in model.Guilds)
+
+                    var validSettings = await db.GetAllGuildUserSettings(userId);
+                    var validGuildIds = validSettings.Select(s => s.User.Guild.GuildId).ToHashSet();
+
+                    foreach (var guild in trackedGuilds.Where(g => validGuildIds.Contains(g.ID)))
                     {
-                        // Assuming you have a method to update specific guild settings
                         await db.UpdateGuildUserSettings(userId, guild.ID, guild.Active, guild.Leaderboard);
                     }
                     _ = ShowSuccessMessage();
@@ -126,6 +142,51 @@
         }
     }
 
+    private long? resetConfirmGuildId;
+    private bool isResetting;
+
+    private async Task ResetLevelAsync(TrackedGuild guild)
+    {
+        if (isResetting) return;
+        isResetting = true;
+
+        try
+        {
+            var authState = await AuthenticationStateTask!;
+            var claimsUser = authState.User;
+
+            if (claimsUser.Identity?.IsAuthenticated != true)
+                return;
+
+            var userIdString = claimsUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!long.TryParse(userIdString, out long userId))
+                return;
+
+            if (!trackedGuilds.Any(g => g.ID == guild.ID))
+                return;
+
+            await db.ResetUserLevelAsync(userId, guild.ID);
+
+            var dbUser = await guild_db.GetOrCreateUserAsync(userId);
+            var dbGuild = await guild_db.GetOrCreateGuildAsync(guild.ID);
+            var guildUser = await guild_db.GetOrCreateGuildUserAsync(dbGuild, dbUser);
+            var guildSettings = await db.GetOrCreateSettingsAsync(dbGuild);
+            var guildRank = await db.GetOrCreateUserRankAsync(guildUser);
+            var position = await db.GetGuildRankAsync(guildRank);
+
+            guild.Exp = guildRank.Exp;
+            guild.Level = guildRank.GetLevel(guildSettings);
+            guild.Position = position;
+            resetConfirmGuildId = null;
+
+            await ShowSuccessMessage();
+        }
+        finally
+        {
+            isResetting = false;
+        }
+    }
+
     private async Task ShowSuccessMessage(int time = 3000) {
         success = true;
         await Task.Delay(time);
@@ -136,9 +197,7 @@
 
     public class FormModel
     {
-
         public bool Global { get; set; }
-        public List<TrackedGuild> Guilds { get; set; } = new();
     }
 
     public class TrackedGuild
@@ -179,17 +238,51 @@
 }
 else
 {
-    <EditForm Model="model" OnValidSubmit="Submit" FormName="Starship2">
+    <EditForm Model="model" OnValidSubmit="Submit" FormName="ProfileForm">
+        <AntiforgeryToken />
         <DataAnnotationsValidator />
-        <h4>Tracked Guilds</h4>
-    <hr />
+        @* <h4>Tracked Guilds</h4>
+        @foreach (var guild in trackedGuilds)
+    {
+        <div class="card w-100 mb-2">
+            <h5 class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    <img class="rounded me-1" src="@guild.IconURL" width=30 height=30>
+                    @guild.Name
+                </span>
+                <span>#@guild.Position, Level: @guild.Level</span>
+            </h5>
+            <div class="card-body">
+                <div class="form-check">
+                    <InputCheckbox @bind-Value="guild.Active" class="form-check-input" id="@($"check-{guild.ID}-active")" />
+                    <label class="form-check-label" for="@($"check-{guild.ID}-active")">Tracking Exp</label>
+                </div>
+                <div class="form-check">
+                    <InputCheckbox @bind-Value="guild.Leaderboard" class="form-check-input" id="@($"check-{guild.ID}-leaderboard")" />
+                    <label class="form-check-label" for="@($"check-{guild.ID}-leaderboard")">Show on guild leaderboard</label>
+                </div>
+                @if (resetConfirmGuildId == guild.ID)
+                {
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-danger btn-sm me-1" disabled="@isResetting" @onclick="() => ResetLevelAsync(guild)">Confirm Reset</button>
+                        <button type="button" class="btn btn-secondary btn-sm" @onclick="() => resetConfirmGuildId = null">Cancel</button>
+                    </div>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-warning btn-sm mt-2" @onclick="() => resetConfirmGuildId = guild.ID">Reset Level</button>
+                }
+            </div>
+        </div>
+    }
+    <hr class="my-4" /> *@
         <ValidationSummary />
         <h4>General Settings</h4>
-        <div class="form-group mt-3">
+        <div class="mb-3">
             <InputCheckbox @bind-Value="model!.Global" class="form-check-input" id="globalCheck" />
             <label class="form-label" for="globalCheck">Show rank on global leaderboards</label>
         </div>
-        <button type="submit" class="btn btn-primary text-white" disabled="@isLoading">
+        <button type="submit" class="btn btn-primary" disabled="@isLoading">
             @(isLoading ? "Saving..." : "Save")
         </button>
     </EditForm>

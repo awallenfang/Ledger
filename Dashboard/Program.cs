@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Fluxify.Rest;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net;
+using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -22,6 +23,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddAntiforgery();
 var token = builder.Configuration["token"]
     ?? throw new InvalidOperationException("TOKEN is missing from configuration.");
 builder.Services.AddScoped(sp =>
@@ -104,6 +106,7 @@ builder.Services.AddScoped<GuildDbService>();
 
 builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
+StaticWebAssetsLoader.UseStaticWebAssets(app.Environment, app.Configuration);
 app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 

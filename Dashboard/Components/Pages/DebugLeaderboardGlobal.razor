@@ -1,0 +1,124 @@
+@page "/debug/leaderboard-global"
+
+<PageTitle>Debug Global Leaderboard</PageTitle>
+<h1>Debug Global Leaderboard</h1>
+
+<div class="d-flex justify-content-center gap-2 mt-3 mb-3">
+    <a href="/debug/leaderboard" class="btn btn-primary">Text Leaderboard</a>
+    <a href="/debug/leaderboard-vc" class="btn btn-primary">VC Leaderboard</a>
+    <a href="/debug/leaderboard-global" class="btn btn-primary">Global Leaderboard</a>
+</div>
+
+@{
+    var podiumUsers = DebugUsers.Take(3).ToList();
+    var user1 = podiumUsers.FirstOrDefault(u => u.Position == 1);
+    var user2 = podiumUsers.FirstOrDefault(u => u.Position == 2);
+    var user3 = podiumUsers.FirstOrDefault(u => u.Position == 3);
+    var tableUsers = DebugUsers.Skip(3).ToList();
+}
+
+<div class="d-flex justify-content-center align-items-end gap-3 mb-4" style="min-height: 320px;">
+    @if (user2 != null)
+    {
+        <div class="card podium-card podium-silver text-center" style="width: 220px;">
+            <div class="card-body">
+                <i class="bi bi-award-fill fs-1" style="color: var(--bs-secondary);"></i>
+                <br>
+                @if (user2.AvatarURL != null)
+                {
+                    <img class="rounded-circle border border-2 border-secondary mt-1" src="@user2.AvatarURL" width="80" height="80" style="object-fit: cover;" alt="">
+                }
+                <h5 class="mt-2 mb-0">@user2.Name</h5>
+                <div class="text-muted small">@user2.Messages messages</div>
+                <div class="mt-1 fw-bold small" style="color: var(--bs-secondary);">#2</div>
+            </div>
+        </div>
+    }
+    @if (user1 != null)
+    {
+        <div class="card podium-card podium-gold text-center" style="width: 260px; z-index: 1;">
+            <div class="card-body">
+                <i class="bi bi-trophy-fill fs-1" style="color: var(--bs-warning);"></i>
+                <br>
+                @if (user1.AvatarURL != null)
+                {
+                    <img class="rounded-circle border border-3 border-warning mt-1" src="@user1.AvatarURL" width="100" height="100" style="object-fit: cover;" alt="">
+                }
+                <h4 class="mt-2 mb-0">@user1.Name</h4>
+                <div class="text-muted small">@user1.Messages messages</div>
+                <div class="mt-1 fw-bold small" style="color: var(--bs-warning);">#1</div>
+            </div>
+        </div>
+    }
+    @if (user3 != null)
+    {
+        <div class="card podium-card podium-bronze text-center" style="width: 220px;">
+            <div class="card-body">
+                <i class="bi bi-star-fill fs-1" style="color: var(--bs-danger);"></i>
+                <br>
+                @if (user3.AvatarURL != null)
+                {
+                    <img class="rounded-circle border border-2 border-danger mt-1" src="@user3.AvatarURL" width="80" height="80" style="object-fit: cover;" alt="">
+                }
+                <h5 class="mt-2 mb-0">@user3.Name</h5>
+                <div class="text-muted small">@user3.Messages messages</div>
+                <div class="mt-1 fw-bold small" style="color: var(--bs-danger);">#3</div>
+            </div>
+        </div>
+    }
+</div>
+
+<table class="table w-100 align-middle text-center">
+    <thead>
+        <tr>
+            <td>Position</td>
+            <td>Name</td>
+            <td>Messages</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in tableUsers)
+        {
+            <tr>
+                <td>@user.Position</td>
+                <td>
+                    @if (user.AvatarURL != null)
+                    {
+                        <img class="rounded-circle me-1" src="@user.AvatarURL" width="24" height="24" style="object-fit: cover;" alt="">
+                    }
+                    @user.Name
+                </td>
+                <td>@user.Messages</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<DebugUser> DebugUsers = new();
+
+    protected override void OnInitialized()
+    {
+        DebugUsers = new List<DebugUser>
+        {
+            new() { Name = "Luna", Messages = 15420, Position = 1 },
+            new() { Name = "Aether", Messages = 12300, Position = 2 },
+            new() { Name = "Nova", Messages = 9870, Position = 3 },
+            new() { Name = "Orion", Messages = 8200, Position = 4 },
+            new() { Name = "Celeste", Messages = 7100, Position = 5 },
+            new() { Name = "Raven", Messages = 5400, Position = 6 },
+            new() { Name = "Echo", Messages = 3900, Position = 7 },
+            new() { Name = "Frost", Messages = 2800, Position = 8 },
+            new() { Name = "Ember", Messages = 1500, Position = 9 },
+            new() { Name = "Vale", Messages = 600, Position = 10 },
+        };
+    }
+
+    private class DebugUser
+    {
+        public string Name { get; set; }
+        public long Messages { get; set; }
+        public int Position { get; set; }
+        public string? AvatarURL => $"https://i.pravatar.cc/100?u={Name}";
+    }
+}
