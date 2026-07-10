@@ -241,7 +241,7 @@ else
     <EditForm Model="model" OnValidSubmit="Submit" FormName="ProfileForm">
         <AntiforgeryToken />
         <DataAnnotationsValidator />
-        <h4>Tracked Guilds</h4>
+        @* <h4>Tracked Guilds</h4>
         @foreach (var guild in trackedGuilds)
     {
         <div class="card w-100 mb-2">
@@ -275,7 +275,7 @@ else
             </div>
         </div>
     }
-    <hr class="my-4" />
+    <hr class="my-4" /> *@
         <ValidationSummary />
         <h4>General Settings</h4>
         <div class="mb-3">
