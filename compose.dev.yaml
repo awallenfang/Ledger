@@ -56,7 +56,7 @@ services:
     restart: always
     shm_size: 128mb
     volumes:
-      - ./data/db:/var/lib/postgresql/data
+      - ./data/db:/var/lib/postgresql
     env_file:
         - .env
     healthcheck:
